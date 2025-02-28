@@ -32,6 +32,7 @@ import TableHeader from '/@/components/table/header/index.vue'
 import Table from '/@/components/table/index.vue'
 import baTableClass from '/@/utils/baTable'
 import LoginLog from './loginLog.vue'
+import { timeFormat } from '/@/utils/common'
 
 defineOptions({
     name: 'user/user',
@@ -107,8 +108,35 @@ const baTable = new baTableClass(
             { label: t('user.user.day_price'), prop: 'day_price', align: 'center', operator: 'RANGE', sortable: false },
             { label: t('user.user.week_price'), prop: 'week_price', align: 'center', operator: 'RANGE', sortable: false },
             { label: t('user.user.month_price'), prop: 'month_price', align: 'center', operator: 'RANGE', sortable: false },
-            { label: t('user.user.theme_id'), prop: 'theme_id', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE' },
-            { label: '上次登录时间', prop: 'last_login_time', align: 'center', render: 'datetime', operator: 'RANGE', sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd hh:MM:ss' },
+            // { label: t('user.user.theme_id'), prop: 'theme_id', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE' },
+            // { label: '上次登录时间', prop: 'last_login_time', align: 'center', render: 'datetime', operator: 'RANGE', sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd hh:MM:ss' },
+            { 
+                label: '上次登录', 
+                prop: 'last_login_time', 
+                align: 'center', 
+                operator: 'RANGE', 
+                sortable: 'custom', 
+                width: 160,
+                render: 'tag',
+                custom:{'三天内有登录':'primary','三天内未登录':'warning','七天内未登录':'danger'},
+                formatter: (row, column, cellValue, index) => {
+                    const lastLoginTime = new Date(row.last_login_time).getTime()*1000
+                    const now = new Date().getTime()
+                    
+                    const threeDays = 3 * 24 * 60 * 60 * 1000
+                    const sevenDays = 7 * 24 * 60 * 60 * 1000
+                    const diffTime = now - lastLoginTime
+
+                    let className = ''
+                    if (diffTime > sevenDays) {
+                       return '七天内未登录'
+                    } else if (diffTime > threeDays) {
+                        return '三天内未登录'
+                    }
+                    return '三天内有登录'
+                },
+                
+            },
             { label: t('Operate'), align: 'center', width: 200, render: 'buttons', buttons: optButtons, operator: false },
         ],
         dblClickNotEditColumn: [undefined],

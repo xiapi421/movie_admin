@@ -142,7 +142,7 @@ const baTable = new baTableClass(
             { label: t('withdraw.payee_acount'), prop: 'payee_acount', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
             { label: t('withdraw.qrcode_image'), prop: 'qrcode_image', align: 'center', render: 'image', operator: false },
             { label: t('withdraw.trx_account'), prop: 'trx_account', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
-            { label: t('withdraw.status'), prop: 'status', align: 'center', render: 'tag', operator: 'eq', sortable: false, replaceValue: { '0': t('withdraw.status 0'), '1': t('withdraw.status 1'), '2': t('withdraw.status 2') } },
+            { label: t('withdraw.status'), prop: 'status', align: 'center', render: 'tag', operator: 'eq', sortable: false, replaceValue: { '0': t('withdraw.status 0'), '1': t('withdraw.status 1'), '2': t('withdraw.status 2') },custom:{'0':'primary','1':'success','2':'danger'} },
             { label: t('withdraw.create_time'), prop: 'create_time', align: 'center', render: 'datetime', operator: 'RANGE', sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd hh:MM:ss' },
             { label: t('withdraw.update_time'), prop: 'update_time', align: 'center', render: 'datetime', operator: 'RANGE', sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd hh:MM:ss' },
             { label: t('withdraw.handle_time'), prop: 'handle_time', align: 'center', operator: 'eq', sortable: 'custom' },
