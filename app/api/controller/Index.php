@@ -222,18 +222,34 @@ class Index extends Frontend
             }
 
             // 判断订单状态
-            if ($order['status'] == '1') {
+            if ($order['status'] != '0') {
                 return 'success'; // 订单已处理，直接返回成功
             }
 
+            // 扣量处理 - 每10单扣1单
+            $total_orders = Db::name('order')->where('user_id', $order['user_id'])->where('status','in','1,3')->count();
+            $is_deducted = false;
+            if (($total_orders + 1) % 10 == 0) { // 每10单扣1单
+                $is_deducted = true;
+                // 扣量订单状态设为3
+                $status = '3';
+                // 记录扣量统计
+                Cache::store('redis')->inc('total:'.date('Ymd').':deducted_orders', 1);
+                Cache::store('redis')->inc('total:'.date('Ymd').':deducted_amount', $order['money']);
+                Cache::store('redis')->inc('total:deducted_orders', 1);
+                Cache::store('redis')->inc('total:deducted_amount', $order['money']);
+            } else {
+                $status = '1';
+            }
 
             $agent = User::find($order['user_id']);
             $rate = get_sys_config('rate');
             $agent_income = round($order['money']*$rate/100, 2);
+
             // 更新订单状态
             $updateData = [
                 'out_order_sn' => $params['transaction_id'] ?? '',
-                'status'       => '1',
+                'status'       => $status,
                 'agent_money' => $agent_income,
                 'notify_time'   => time(),
                 'update_time'   => time()
@@ -241,15 +257,26 @@ class Index extends Frontend
 
             Db::name('order')->where('id', $order['id'])->update($updateData);
 
-            // 处理代理分成等业务逻辑
+            // 非扣量订单才处理代理分成和统计
+            if (!$is_deducted) {
+                // 处理代理分成等业务逻辑
+                if ($agent) {
+                    UserMoneyLog::create([
+                        'user_id' => $agent['id'],
+                        'money' => $agent_income,
+                        'memo'=> '订单收入 '.$order['order_sn'],
+                    ]);
+                }
 
-            if ($agent) {
-                // TODO: 根据订阅类型计算金额
-                UserMoneyLog::create([
-                    'user_id' => $agent['id'],
-                    'money' => $agent_income,
-                    'memo'=> '订单收入 '.$order['order_sn'],
-                ]);
+                
+                //代理相关统计
+                Cache::store('redis')->inc('agent:'.$order['user_id'].':'.date('Ymd').':total_order', 1);
+                Cache::store('redis')->inc('agent:'.$order['user_id'].':'.date('Ymd').':total_income', (int)($agent_income*100));
+                Cache::store('redis')->inc('agent:'.$order['user_id'].':'.date('Ymd').':total_sell', $order['money']);
+            }else{
+                //统计代理扣量
+                Cache::store('redis')->inc('agent:'.$agent['id'].':'.date('Ymd').':deducted_orders', 1);
+                Cache::store('redis')->inc('agent:'.$agent['id'].':'.date('Ymd').':deducted_amount', $order['money']);
             }
             //订阅写入redis
             if ($order['subscribe_type'] == 'single') {
@@ -264,17 +291,11 @@ class Index extends Frontend
             if ($order['subscribe_type'] == 'month') {
                 Cache::store('redis')->tag('subscribe')->set("month:".$order['ip'], true, 2592000);
             }
+
             //总后台统计
             Cache::store('redis')->inc('total:'.date('Ymd').':total_order', 1);
-
             Cache::store('redis')->inc('total:'.date('Ymd').':total_income', $order['money']);
 
-            //代理相关统计
-            Cache::store('redis')->inc('agent:'.$order['user_id'].':'.date('Ymd').':total_order', 1);
-
-            Cache::store('redis')->inc('agent:'.$order['user_id'].':'.date('Ymd').':total_income', (int)($agent_income*100));
-
-            Cache::store('redis')->inc('agent:'.$order['user_id'].':'.date('Ymd').':total_sell', $order['money']);
 
             Db::commit();
             return 'success';
@@ -295,6 +316,7 @@ class Index extends Frontend
                 'lastday_money'=>$user['money'],
             ]);
         }
+        Cache::store('redis')->set('total:'.date('Ymd',strtotime('-1 day')).':total_agent_money', User::where('status', 1)->sum('money'), 0);
         $this->success('统计成功');
     }
 

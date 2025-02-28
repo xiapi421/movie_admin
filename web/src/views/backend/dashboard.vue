@@ -28,11 +28,11 @@
             <el-row :gutter="20">
                 <el-col :sm="12" :lg="6">
                     <div class="small-panel user-reg suspension">
-                        <div class="small-panel-title">{{ t('dashboard.Member registration') }}</div>
+                        <div class="small-panel-title">今日金额</div>
                         <div class="small-panel-content">
                             <div class="content-left">
                                 <Icon color="#8595F4" size="20" name="fa fa-line-chart" />
-                                <el-statistic :value="userRegNumberOutput" :value-style="statisticValueStyle" />
+                                <el-statistic :value="dashboard.today_sell" :value-style="statisticValueStyle" />
                             </div>
                             <div class="content-right">+14%</div>
                         </div>
@@ -40,11 +40,11 @@
                 </el-col>
                 <el-col :sm="12" :lg="6">
                     <div class="small-panel file suspension">
-                        <div class="small-panel-title">{{ t('dashboard.Number of attachments Uploaded') }}</div>
+                        <div class="small-panel-title">今日单量</div>
                         <div class="small-panel-content">
                             <div class="content-left">
                                 <Icon color="#AD85F4" size="20" name="fa fa-file-text" />
-                                <el-statistic :value="fileNumberOutput" :value-style="statisticValueStyle" />
+                                <el-statistic :value="dashboard.today_order" :value-style="statisticValueStyle" />
                             </div>
                             <div class="content-right">+50%</div>
                         </div>
@@ -52,11 +52,11 @@
                 </el-col>
                 <el-col :sm="12" :lg="6">
                     <div class="small-panel users suspension">
-                        <div class="small-panel-title">{{ t('dashboard.Total number of members') }}</div>
+                        <div class="small-panel-title">今日代理余额</div>
                         <div class="small-panel-content">
                             <div class="content-left">
                                 <Icon color="#74A8B5" size="20" name="fa fa-users" />
-                                <el-statistic :value="usersNumberOutput" :value-style="statisticValueStyle" />
+                                <el-statistic :value="dashboard.today_agent_money" :value-style="statisticValueStyle" />
                             </div>
                             <div class="content-right">+28%</div>
                         </div>
@@ -64,11 +64,11 @@
                 </el-col>
                 <el-col :sm="12" :lg="6">
                     <div class="small-panel addons suspension">
-                        <div class="small-panel-title">{{ t('dashboard.Number of installed plug-ins') }}</div>
+                        <div class="small-panel-title">今日扣量</div>
                         <div class="small-panel-content">
                             <div class="content-left">
                                 <Icon color="#F48595" size="20" name="fa fa-object-group" />
-                                <el-statistic :value="addonsNumberOutput" :value-style="statisticValueStyle" />
+                                <el-statistic :value="dashboard.today_kl" :value-style="statisticValueStyle" />
                             </div>
                             <div class="content-right">+88%</div>
                         </div>
@@ -76,7 +76,60 @@
                 </el-col>
             </el-row>
         </div>
-        <div class="growth-chart">
+
+        <div class="small-panel-box">
+            <el-row :gutter="20">
+                <el-col :sm="12" :lg="6">
+                    <div class="small-panel user-reg suspension">
+                        <div class="small-panel-title">昨日金额</div>
+                        <div class="small-panel-content">
+                            <div class="content-left">
+                                <Icon color="#8595F4" size="20" name="fa fa-line-chart" />
+                                <el-statistic :value="dashboard.last_sell" :value-style="statisticValueStyle" />
+                            </div>
+                            <div class="content-right">+14%</div>
+                        </div>
+                    </div>
+                </el-col>
+                <el-col :sm="12" :lg="6">
+                    <div class="small-panel file suspension">
+                        <div class="small-panel-title">昨日单量</div>
+                        <div class="small-panel-content">
+                            <div class="content-left">
+                                <Icon color="#AD85F4" size="20" name="fa fa-file-text" />
+                                <el-statistic :value="dashboard.last_order" :value-style="statisticValueStyle" />
+                            </div>
+                            <div class="content-right">+50%</div>
+                        </div>
+                    </div>
+                </el-col>
+                <el-col :sm="12" :lg="6">
+                    <div class="small-panel users suspension">
+                        <div class="small-panel-title">昨日代理余额</div>
+                        <div class="small-panel-content">
+                            <div class="content-left">
+                                <Icon color="#74A8B5" size="20" name="fa fa-users" />
+                                <el-statistic :value="dashboard.last_agent_money" :value-style="statisticValueStyle" />
+                            </div>
+                            <div class="content-right">+28%</div>
+                        </div>
+                    </div>
+                </el-col>
+                <el-col :sm="12" :lg="6">
+                    <div class="small-panel addons suspension">
+                        <div class="small-panel-title">昨日扣量</div>
+                        <div class="small-panel-content">
+                            <div class="content-left">
+                                <Icon color="#F48595" size="20" name="fa fa-object-group" />
+                                <el-statistic :value="dashboard.last_kl" :value-style="statisticValueStyle" />
+                            </div>
+                            <div class="content-right">+88%</div>
+                        </div>
+                    </div>
+                </el-col>
+            </el-row>
+        </div>
+        <!-- <div class="growth-chart">
             <el-row :gutter="20">
                 <el-col class="lg-mb-20" :xs="24" :sm="24" :md="12" :lg="9">
                     <el-card shadow="hover" :header="t('dashboard.Membership growth')">
@@ -129,9 +182,9 @@
                     </el-card>
                 </el-col>
             </el-row>
-        </div>
+        </div> -->
 
-        <div class="growth-chart">
+        <!-- <div class="growth-chart">
             <el-row :gutter="20">
                 <el-col class="lg-mb-20" :xs="24" :sm="24" :md="24" :lg="12">
                     <el-card shadow="hover" :header="t('dashboard.Member source')">
@@ -144,14 +197,14 @@
                     </el-card>
                 </el-col>
             </el-row>
-        </div>
+        </div> -->
     </div>
 </template>
 
 <script setup lang="ts">
 import { useEventListener, useTemplateRefsList, useTransition } from '@vueuse/core'
-import * as echarts from 'echarts'
-import { CSSProperties, nextTick, onActivated, onBeforeMount, onMounted, onUnmounted, reactive, toRefs, watch } from 'vue'
+// import * as echarts from 'echarts'
+import { CSSProperties, nextTick, onActivated, onBeforeMount, onMounted, onUnmounted, reactive, toRefs, watch, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { index } from '/@/api/backend/dashboard'
 import coffeeSvg from '/@/assets/dashboard/coffee.svg'
@@ -162,6 +215,7 @@ import { useNavTabs } from '/@/stores/navTabs'
 import { fullUrl, getGreet } from '/@/utils/common'
 import { Local } from '/@/utils/storage'
 let workTimer: number
+let timer: number // 添加定时器变量
 
 defineOptions({
     name: 'dashboard',
@@ -204,9 +258,19 @@ const statisticValueStyle: CSSProperties = {
     fontSize: '28px',
 }
 
-index().then((res) => {
-    state.remark = res.data.remark
-})
+// 创建获取数据的函数
+const fetchDashboardData = () => {
+    index().then((res) => {
+        dashboard.value.today_sell = res.data.today_sell
+        dashboard.value.today_order = res.data.today_order
+        dashboard.value.last_sell = res.data.last_sell
+        dashboard.value.last_order = res.data.last_order
+        dashboard.value.today_agent_money = res.data.today_agent_money
+        dashboard.value.last_agent_money = res.data.last_agent_money
+        dashboard.value.today_kl = res.data.today_kl
+        dashboard.value.last_kl = res.data.last_kl
+    })
+}
 
 const initCountUp = () => {
     // 虚拟数据
@@ -215,6 +279,28 @@ const initCountUp = () => {
     countUpRefs.usersNumber.value = 9486
     countUpRefs.addonsNumber.value = 875
 }
+
+interface DashboardData {
+    today_sell: number
+    today_order: number
+    last_sell: number
+    last_order: number
+    today_agent_money: number
+    last_agent_money: number
+    today_kl: number
+    last_kl: number
+}
+
+const dashboard = ref<DashboardData>({
+    today_sell: 0,
+    today_order: 0,
+    last_sell: 0,
+    last_order: 0,
+    today_agent_money: 0,
+    last_agent_money: 0,
+    today_kl: 0,
+    last_kl: 0
+})
 
 const initUserGrowthChart = () => {
     const userGrowthChart = echarts.init(chartRefs.value[0] as HTMLElement)
@@ -593,17 +679,11 @@ const formatSeconds = (seconds: number) => {
     return result
 }
 
-onActivated(() => {
-    echartsResize()
-})
-
 onMounted(() => {
     startWork()
     initCountUp()
-    initUserGrowthChart()
-    initFileGrowthChart()
-    initUserSourceChart()
-    initUserSurnameChart()
+    fetchDashboardData() // 初始加载
+    timer = window.setInterval(fetchDashboardData, 60000) // 每分钟执行一次
     useEventListener(window, 'resize', echartsResize)
 })
 
@@ -615,6 +695,7 @@ onBeforeMount(() => {
 
 onUnmounted(() => {
     clearInterval(workTimer)
+    clearInterval(timer) // 清除定时器
 })
 
 watch(
