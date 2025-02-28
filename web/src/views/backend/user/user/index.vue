@@ -16,6 +16,9 @@
 
         <!-- 表单 -->
         <PopupForm />
+        
+        <!-- 登录日志对话框 -->
+        <LoginLog ref="loginLogRef" />
     </div>
 </template>
 
@@ -28,6 +31,7 @@ import { defaultOptButtons } from '/@/components/table'
 import TableHeader from '/@/components/table/header/index.vue'
 import Table from '/@/components/table/index.vue'
 import baTableClass from '/@/utils/baTable'
+import LoginLog from './loginLog.vue'
 
 defineOptions({
     name: 'user/user',
@@ -35,8 +39,43 @@ defineOptions({
 
 const { t } = useI18n()
 const tableRef = ref()
-const optButtons: OptButton[] = defaultOptButtons(['edit', 'delete'])
+const loginLogRef = ref()
+let optButtons: OptButton[] = defaultOptButtons(['edit', 'delete'])
 
+let newButton: OptButton[] = [
+    {
+        // 渲染方式:tipButton=带tip的按钮,confirmButton=带确认框的按钮,moveButton=移动按钮
+        render: 'tipButton',
+        // 按钮名称
+        name: 'info',
+        // 鼠标放置时的 title 提示
+        title: '登录日志',
+        // 直接在按钮内显示的文字，title 有值时可为空
+        text: '登录日志',
+        // 按钮类型，请参考 element plus 的按钮类型
+        type: 'primary',
+        // 按钮 icon
+        icon: 'fa fa-search-plus',
+        class: 'table-row-info',
+        // tipButton 禁用 tip
+        disabledTip: false,
+        // 自定义点击事件
+        click: (row: TableRow) => {
+            loginLogRef.value?.open(row.id)
+        },
+        // 按钮是否显示，请返回布尔值
+        display: (row: TableRow, field: TableColumn) => {
+            return true
+        },
+        // 按钮是否禁用，请返回布尔值
+        disabled: (row: TableRow, field: TableColumn) => {
+            return false
+        },
+        // 自定义el-button属性
+        attr: {}
+    },
+]
+optButtons = newButton.concat(optButtons)
 /**
  * baTable 内包含了表格的所有数据且数据具备响应性，然后通过 provide 注入给了后代组件
  */
@@ -70,7 +109,7 @@ const baTable = new baTableClass(
             { label: t('user.user.month_price'), prop: 'month_price', align: 'center', operator: 'RANGE', sortable: false },
             { label: t('user.user.theme_id'), prop: 'theme_id', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE' },
             { label: '上次登录时间', prop: 'last_login_time', align: 'center', render: 'datetime', operator: 'RANGE', sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd hh:MM:ss' },
-            { label: t('Operate'), align: 'center', width: 100, render: 'buttons', buttons: optButtons, operator: false },
+            { label: t('Operate'), align: 'center', width: 200, render: 'buttons', buttons: optButtons, operator: false },
         ],
         dblClickNotEditColumn: [undefined],
     },

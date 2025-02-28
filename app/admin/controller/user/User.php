@@ -92,7 +92,7 @@ class User extends Backend
     {
         $user_id= $this->request->param('user_id');
         $data =Log::where('user_id',$user_id)->order('id desc')->limit(10)->select();
-        $this->success('ok', $data);
+        $this->success('获取登录日志成功', $data);
     }
 
     /**

@@ -43,3 +43,15 @@ export function importVideoApi(data: FormData) {
         }
     )
 }
+
+export function getUserLoginLogApi(id: number) {
+    return createAxios(
+        {
+            url: url+'user.User/getLoginLog?user_id='+id,
+            method: 'get',
+        },
+        {
+            showSuccessMessage: true,
+        }
+    )
+}
