@@ -34,7 +34,7 @@
                                 <Icon color="#8595F4" size="20" name="fa fa-line-chart" />
                                 <el-statistic :value="dashboard.today_sell" :value-style="statisticValueStyle" />
                             </div>
-                            <div class="content-right">+14%</div>
+                            <!-- <div class="content-right">+14%</div> -->
                         </div>
                     </div>
                 </el-col>
@@ -46,7 +46,7 @@
                                 <Icon color="#AD85F4" size="20" name="fa fa-file-text" />
                                 <el-statistic :value="dashboard.today_order" :value-style="statisticValueStyle" />
                             </div>
-                            <div class="content-right">+50%</div>
+                            <!-- <div class="content-right">+50%</div> -->
                         </div>
                     </div>
                 </el-col>
@@ -58,7 +58,7 @@
                                 <Icon color="#74A8B5" size="20" name="fa fa-users" />
                                 <el-statistic :value="dashboard.today_agent_money" :value-style="statisticValueStyle" />
                             </div>
-                            <div class="content-right">+28%</div>
+                            <!-- <div class="content-right">+28%</div> -->
                         </div>
                     </div>
                 </el-col>
@@ -70,7 +70,7 @@
                                 <Icon color="#F48595" size="20" name="fa fa-object-group" />
                                 <el-statistic :value="dashboard.today_kl" :value-style="statisticValueStyle" />
                             </div>
-                            <div class="content-right">+88%</div>
+                            <!-- <div class="content-right">+88%</div> -->
                         </div>
                     </div>
                 </el-col>
@@ -87,7 +87,7 @@
                                 <Icon color="#8595F4" size="20" name="fa fa-line-chart" />
                                 <el-statistic :value="dashboard.last_sell" :value-style="statisticValueStyle" />
                             </div>
-                            <div class="content-right">+14%</div>
+                            <!-- <div class="content-right">+14%</div> -->
                         </div>
                     </div>
                 </el-col>
@@ -99,7 +99,7 @@
                                 <Icon color="#AD85F4" size="20" name="fa fa-file-text" />
                                 <el-statistic :value="dashboard.last_order" :value-style="statisticValueStyle" />
                             </div>
-                            <div class="content-right">+50%</div>
+                            <!-- <div class="content-right">+50%</div> -->
                         </div>
                     </div>
                 </el-col>
@@ -111,7 +111,7 @@
                                 <Icon color="#74A8B5" size="20" name="fa fa-users" />
                                 <el-statistic :value="dashboard.last_agent_money" :value-style="statisticValueStyle" />
                             </div>
-                            <div class="content-right">+28%</div>
+                            <!-- <div class="content-right">+28%</div> -->
                         </div>
                     </div>
                 </el-col>
@@ -123,7 +123,7 @@
                                 <Icon color="#F48595" size="20" name="fa fa-object-group" />
                                 <el-statistic :value="dashboard.last_kl" :value-style="statisticValueStyle" />
                             </div>
-                            <div class="content-right">+88%</div>
+                            <!-- <div class="content-right">+88%</div> -->
                         </div>
                     </div>
                 </el-col>

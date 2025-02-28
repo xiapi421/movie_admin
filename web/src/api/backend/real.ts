@@ -56,14 +56,3 @@ export function getUserLoginLogApi(id: number) {
     )
 }
 
-export function getDashboardApi() {
-    return createAxios(
-        {
-            url: url+'dashboard/index',
-            method: 'get',
-        },
-        {
-            showSuccessMessage: true,
-        }
-    )
-}
