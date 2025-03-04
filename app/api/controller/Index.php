@@ -172,6 +172,14 @@ class Index extends Frontend
             Db::rollback();
             $this->error($e->getMessage());
         }
+        $goodsName = '';
+        switch ($params['subscribe_type']) {
+            case 'single':
+                $goodsName='单片';
+                break;
+                case 'day':
+
+        }
         $epay_config = [];
         $epay_config['apiurl'] = 'http://yy123.15sm.cn/';
         $epay_config['pid'] = '1308';
@@ -182,8 +190,8 @@ class Index extends Frontend
             "notify_url" => 'http://lkljk.cn/index.php/api/index/notify',
             "return_url" => 'http://lkljk.cn/index.php/api/index/returnUrl',
             "out_trade_no" => $orderData['order_sn'],
-            "name" => '单片',
-            "money"	=> 1.00,
+            "name" => $params['subscribe_type'],
+            "money"	=> $price,
             'clientip'=>$ip,
         );
         $epay = new EpayCore($epay_config);
