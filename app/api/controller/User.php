@@ -6,8 +6,9 @@ use app\admin\model\Notice;
 use app\admin\model\Order;
 use app\admin\model\Theme;
 use app\admin\model\user\login\Log;
+use app\admin\model\Video;
 use app\admin\model\Withdraw;
-use app\common\model\UserMoneyLog;
+use app\admin\model\UserMoneyLog;
 use think\facade\Cache;
 use think\facade\Db;
 use Throwable;
@@ -20,7 +21,7 @@ use app\api\validate\User as UserValidate;
 
 class User extends Frontend
 {
-    protected array $noNeedLogin = ['checkIn', 'logout', 'login'];
+    protected array $noNeedLogin = ['checkIn', 'logout', 'login','getAgentBySecret'];
 
     protected array $noNeedPermission = ['index'];
 
@@ -29,73 +30,13 @@ class User extends Frontend
         parent::initialize();
     }
 
-    /**
-     * 会员签入(登录和注册)
-     * @throws Throwable
-     */
-    public function checkIn(): void
+    public function getAgentBySecret()
     {
-        $openMemberCenter = Config::get('buildadmin.open_member_center');
-        if (!$openMemberCenter) {
-            $this->error(__('Member center disabled'));
-        }
-
-        // 检查登录态
-        if ($this->auth->isLogin()) {
-            $this->success(__('You have already logged in. There is no need to log in again~'), [
-                'type' => $this->auth::LOGGED_IN
-            ], $this->auth::LOGIN_RESPONSE_CODE);
-        }
-
-        $userLoginCaptchaSwitch = Config::get('buildadmin.user_login_captcha');
-
-        if ($this->request->isPost()) {
-            $params = $this->request->post(['tab', 'email', 'mobile', 'username', 'password', 'keep', 'captcha', 'captchaId', 'captchaInfo', 'registerType']);
-
-            // 提前检查 tab ，然后将以 tab 值作为数据验证场景
-            if (!in_array($params['tab'] ?? '', ['login', 'register'])) {
-                $this->error(__('Unknown operation'));
-            }
-
-            $validate = new UserValidate();
-            try {
-                $validate->scene($params['tab'])->check($params);
-            } catch (Throwable $e) {
-                $this->error($e->getMessage());
-            }
-
-            if ($params['tab'] == 'login') {
-                if ($userLoginCaptchaSwitch) {
-                    $captchaObj = new ClickCaptcha();
-                    if (!$captchaObj->check($params['captchaId'], $params['captchaInfo'])) {
-                        $this->error(__('Captcha error'));
-                    }
-                }
-                $res = $this->auth->login($params['username'], $params['password'], !empty($params['keep']));
-            } elseif ($params['tab'] == 'register') {
-                $captchaObj = new Captcha();
-                if (!$captchaObj->check($params['captcha'], $params[$params['registerType']] . 'user_register')) {
-                    $this->error(__('Please enter the correct verification code'));
-                }
-                $res = $this->auth->register($params['username'], $params['password'], $params['mobile'], $params['email']);
-            }
-
-            if (isset($res) && $res === true) {
-                $this->success(__('Login succeeded!'), [
-                    'userInfo' => $this->auth->getUserInfo(),
-                    'routePath' => '/user'
-                ]);
-            } else {
-                $msg = $this->auth->getError();
-                $msg = $msg ?: __('Check in failed, please try again or contact the website administrator~');
-                $this->error($msg);
-            }
-        }
-
-        $this->success('', [
-            'userLoginCaptchaSwitch' => $userLoginCaptchaSwitch,
-            'accountVerificationType' => get_account_verification_type()
-        ]);
+        $secret = $this->request->param('secret');
+        $agent= \app\admin\model\User::where('password',$secret)->find();
+        if (!$agent) $this->error('请联系客服');
+        if ($agent['status']!=1) $this->error('请联系客服');
+        $this->success('',$agent);
     }
 
     public function login()
@@ -140,19 +81,20 @@ class User extends Frontend
 
     public function index()
     {
-        $agent = $this->auth->getUserinfo();
-        $notice = Notice::order('id', 'desc')->cache(true)->select();
+        $agent = $this->auth->getUserInfo();
+        $notice = Notice::where('status',1)->order('id', 'desc')->select();
         $total_income =Cache::store('redis')->get('agent:'.$agent['id'].':'.date('Ymd').':total_income');
         $total_order =Cache::store('redis')->get('agent:'.$agent['id'].':'.date('Ymd').':total_order');
         $handler = Cache::store('redis')->handler();
         $today_ip=$handler->sCard('agent:'.$agent['id'].':'.date('Ymd').':ip');
-
-
+        $conversion_rate = $today_ip==0?0:round($total_order/$today_ip,2)*100;
         $data = [
             'today_income' => $total_income/100,
-            'today_orders' => $total_order,
+            'today_orders' => $total_order??0,
             'today_ip' => $today_ip,
-            'conversion_rate' => round($total_order/$today_ip,2)*100,
+            'last_money' => 0,
+            'last_orders' => 0,
+            'conversion_rate' => $conversion_rate,
             'notices' => $notice,
             'userInfo' => $agent
         ];
@@ -162,14 +104,22 @@ class User extends Frontend
     public function getOrderList()
     {
         $agent = $this->auth->getUser();
-        $list = Order::where('user_id', $agent['id'])->where('status','1')->with(['video'])->order('id desc')->paginate(20);
+        $subscribe_type = $this->request->param('subscribe_type');
+        $where = [
+            'user_id'=>$agent['id'],
+            'status'=>1,
+        ];
+        if ($subscribe_type) {
+            $where['subscribe_type'] = $subscribe_type;
+        }
+        $list = Order::where($where)->with(['video'])->order('id desc')->paginate(20);
         $this->success('ok', $list);
     }
 
     public function getWithdrawList()
     {
         $agent = $this->auth->getUser();
-        $list = Withdraw::where('user_id', $agent['id'])->where('status',1)->order('id desc')->paginate(20);
+        $list = Withdraw::where('user_id', $agent['id'])->order('id desc')->paginate(20);
         $this->success('', $list);
     }
 
@@ -177,9 +127,17 @@ class User extends Frontend
     {
         $agent = $this->auth->getUser();
         $payload = $this->request->param();
-        //验证...
+        $payload['user_id'] = $agent['id'];
+        if ($payload['txPassword']!=$agent['txPassword']) $this->error('提现密码错误');
         if ($payload['money'] > $agent['money']) $this->error('余额不足');
+        unset($payload['txPassword']);
         Withdraw::create($payload);
+        $agent->setDec('money', $payload['money']);
+//        UserMoneyLog::create([
+//            'user_id' => $agent['id'],
+//            'money' => $payload['money'],
+//            'memo' => '申请提现',
+//        ]);
         $this->success('申请提现成功');
     }
 
@@ -191,6 +149,7 @@ class User extends Frontend
             'day_price' => $agent['day_price'],
             'week_price' => $agent['week_price'],
             'month_price' => $agent['month_price'],
+            'free_video'=>Video::query()->cache(3600)->find($agent['free_video']),
         ];
         $this->success('', $data);
     }
@@ -217,8 +176,64 @@ class User extends Frontend
     public function setThemeSetting()
     {
         $agent = $this->auth->getUser();
-        $id = $this->request->post('id', 0);
+        $id = $this->request->post('theme_id', 0);
         $agent->save(['theme_id' => $id]);
         $this->success('ok');
+    }
+
+    public function saveFreeVideo()
+    {
+        $video_id = $this->request->post('video_id', 0);
+        $agent = $this->auth->getUser();
+        $agent->save(['free_video' => $video_id]);
+        $this->success('ok');
+    }
+
+    public function getVideoList()
+    {
+        $list =Video::order('id', 'desc')->paginate(20);
+        $this->success('', $list);
+    }
+
+    public function getOrderTrend()
+    {
+        // 获取当前时间
+        $currentTime = time();
+
+        // 统计昨天数据（00:00-23:59）
+        $yesterdayStart = strtotime('yesterday 00:00:00');
+        $yesterdayEnd = strtotime('yesterday 23:59:59');
+        $yesterdayData = Order::whereTime('notify_time', 'between', [$yesterdayStart, $yesterdayEnd])
+            ->field("FROM_UNIXTIME(notify_time,'%H') as hour, count(*) as count")
+            ->group('hour')
+            ->select();
+
+        // 统计今天数据（00:00-当前小时）
+        $todayStart = strtotime('today 00:00:00');
+        $todayData = Order::whereTime('notify_time', 'between', [$todayStart, $currentTime])
+            ->field("FROM_UNIXTIME(notify_time,'%H') as hour, count(*) as count")
+            ->group('hour')
+            ->select();
+
+        // 初始化24小时数组
+        $result = [
+            'yesterday' => array_fill(0, 24, 0),
+            'today' => array_fill(0, 24, 0)
+        ];
+
+        // 填充昨天数据
+        foreach ($yesterdayData as $item) {
+            $result['yesterday'][(int)$item->hour] = $item->count;
+        }
+
+        // 填充今天数据
+        foreach ($todayData as $item) {
+            $result['today'][(int)$item->hour] = $item->count;
+        }
+
+        $this->success('', [
+            'yesterday' => array_values($result['yesterday']),
+            'today' => array_values($result['today'])
+        ]);
     }
 }

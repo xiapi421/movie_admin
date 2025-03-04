@@ -32,7 +32,7 @@
                 >
                     <FormItem :label="t('video.video_category_id')" type="remoteSelect" v-model="baTable.form.items!.video_category_id" prop="video_category_id" :input-attr="{ pk: 'category.id', field: 'name', remoteUrl: '/admin/video.Category/index' }" :placeholder="t('Please select field', { field: t('video.video_category_id') })" />
                     <FormItem :label="t('video.name')" type="string" v-model="baTable.form.items!.name" prop="name" :placeholder="t('Please input field', { field: t('video.name') })" />
-                    <FormItem :label="t('video.image')" type="image" v-model="baTable.form.items!.image" prop="image" />
+                    <FormItem :label="t('video.image')" type="string" v-model="baTable.form.items!.image" prop="image" />
                     <FormItem :label="t('video.url')" type="string" v-model="baTable.form.items!.url" prop="url" :placeholder="t('Please input field', { field: t('video.url') })" />
                     <FormItem :label="t('video.duration')" type="string" v-model="baTable.form.items!.duration" prop="duration" :placeholder="t('Please input field', { field: t('video.duration') })" />
                     <!-- <FormItem :label="t('video.total_views')" type="number" v-model="baTable.form.items!.total_views" prop="total_views" :input-attr="{ step: 1 }" :placeholder="t('Please input field', { field: t('video.total_views') })" />

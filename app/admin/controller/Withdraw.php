@@ -2,6 +2,7 @@
 
 namespace app\admin\controller;
 
+use app\admin\model\UserMoneyLog;
 use Throwable;
 use app\common\controller\Backend;
 use app\admin\model\Withdraw as WithdrawModel;
@@ -69,7 +70,12 @@ class Withdraw extends Backend
     {
         $id = $this->request->param('id');
         $status = $this->request->param('status');
-        WithdrawModel::update(['status' => $status,'handletime'=>time()], ['id' => $id]);
+        $withdraw = $this->model->find($id);
+        if (!$withdraw) $this->error('提现记录不存在');
+        WithdrawModel::where('id', $id)->update(['status' => $status,'handle_time' => time()]);
+        if ($status==2){
+            UserMoneyLog::create(['user_id' => $withdraw['user_id'], 'money' => $withdraw['money'], 'memo' => '已驳回']);
+        }
         $this->success('操作成功');
     }
 }

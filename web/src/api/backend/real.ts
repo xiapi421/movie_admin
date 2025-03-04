@@ -56,3 +56,39 @@ export function getUserLoginLogApi(id: number) {
     )
 }
 
+
+export function updateVideoDomainApi(domain: string) {
+    return createAxios(
+        {
+            url: url+'video/updateVideoDomain?domain='+domain,
+            method: 'get',
+        },
+        {
+            showSuccessMessage: true,
+        }
+    )
+}
+
+export function updateImageDomainApi(domain: string) {
+    return createAxios(
+        {
+            url: url+'video/updateImageDomain?domain='+domain,
+            method: 'get',
+        },
+        {
+            showSuccessMessage: true,
+        }
+    )
+}
+
+export function clearPayApi(id: number) {
+    return createAxios(
+        {
+            url: url+'pay/clear?id='+id,
+            method: 'get',
+        },
+        {
+            showSuccessMessage: true,
+        }
+    )
+}

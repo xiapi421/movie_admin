@@ -62,13 +62,14 @@ const optButtons: OptButton[] = [
         click: (row: TableRow, field: TableColumn) => {
             handleWithdraw({id:row.id,status:1}).then((res) => {
                 if (res.code === 1) {
+                    baTable.table.data = []
                     baTable.getIndex()
-                }   
+                }
             })
         },
         // 按钮是否显示，请返回布尔值
         display: (row: TableRow, field: TableColumn) => {
-            return !(row.status === 0)
+            return row.status == 0
         },
         // 按钮是否禁用，请返回布尔值
         disabled: (row: TableRow, field: TableColumn) => {
@@ -102,13 +103,14 @@ const optButtons: OptButton[] = [
         click: (row: TableRow, field: TableColumn) => {
             handleWithdraw({id:row.id,status:2}).then((res) => {
                 if (res.code === 1) {
+                    baTable.table.data = []
                     baTable.getIndex()
-                }   
+                }
             })
         },
         // 按钮是否显示，请返回布尔值
         display: (row: TableRow, field: TableColumn) => {
-            return !(row.status === 0)
+            return row.status == 0
         },
         // 按钮是否禁用，请返回布尔值
         disabled: (row: TableRow, field: TableColumn) => {
@@ -137,15 +139,15 @@ const baTable = new baTableClass(
             { label: t('withdraw.id'), prop: 'id', align: 'center', width: 70, operator: 'RANGE', sortable: 'custom' },
             { label: '代理', prop: 'user.username', align: 'center', operatorPlaceholder: t('Fuzzy query'), render: 'tags', operator: 'LIKE' },
             { label: t('withdraw.money'), prop: 'money', align: 'center', operator: 'RANGE', sortable: false },
-            { label: t('withdraw.withdar_type'), prop: 'withdar_type', align: 'center', render: 'tag', operator: 'eq', sortable: false, replaceValue: { '0': t('withdraw.withdar_type 0'), '1': t('withdraw.withdar_type 1'), '2': t('withdraw.withdar_type 2'), '3': t('withdraw.withdar_type 3') } },
+            { label: '提现类型', prop: 'withdraw_type', align: 'center', render: 'tag', operator: 'eq', sortable: false, replaceValue: { '0': t('withdraw.withdar_type 0'), '1': t('withdraw.withdar_type 1'), '2': t('withdraw.withdar_type 2'), '3': t('withdraw.withdar_type 3') } },
             { label: t('withdraw.payee'), prop: 'payee', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
             { label: t('withdraw.payee_acount'), prop: 'payee_acount', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
-            { label: t('withdraw.qrcode_image'), prop: 'qrcode_image', align: 'center', render: 'image', operator: false },
-            { label: t('withdraw.trx_account'), prop: 'trx_account', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
+            // { label: t('withdraw.qrcode_image'), prop: 'qrcode_image', align: 'center', render: 'image', operator: false },
+            // { label: t('withdraw.trx_account'), prop: 'trx_account', align: 'center', operatorPlaceholder: t('Fuzzy query'), operator: 'LIKE', sortable: false },
             { label: t('withdraw.status'), prop: 'status', align: 'center', render: 'tag', operator: 'eq', sortable: false, replaceValue: { '0': t('withdraw.status 0'), '1': t('withdraw.status 1'), '2': t('withdraw.status 2') },custom:{'0':'primary','1':'success','2':'danger'} },
             { label: t('withdraw.create_time'), prop: 'create_time', align: 'center', render: 'datetime', operator: 'RANGE', sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd hh:MM:ss' },
-            { label: t('withdraw.update_time'), prop: 'update_time', align: 'center', render: 'datetime', operator: 'RANGE', sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd hh:MM:ss' },
-            { label: t('withdraw.handle_time'), prop: 'handle_time', align: 'center', operator: 'eq', sortable: 'custom' },
+            // { label: t('withdraw.update_time'), prop: 'update_time', align: 'center', render: 'datetime', operator: 'RANGE', sortable: 'custom', width: 160, timeFormat: 'yyyy-mm-dd hh:MM:ss' },
+            { label: t('withdraw.handle_time'), prop: 'handle_time', align: 'center', render: 'datetime',operator: 'eq', sortable: 'custom', timeFormat: 'yyyy-mm-dd hh:MM:ss', width: 160  },
             { label: t('Operate'), align: 'center', width: 200, render: 'buttons', buttons: optButtons, operator: false },
         ],
         dblClickNotEditColumn: [undefined],

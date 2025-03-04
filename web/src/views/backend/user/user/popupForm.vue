@@ -34,9 +34,9 @@
                     <FormItem :label="t('user.user.username')" type="string" v-model="baTable.form.items!.username" prop="username" :placeholder="t('Please input field', { field: t('user.user.username') })" />
                     <!-- <FormItem :label="t('user.user.money')" type="number" v-model="baTable.form.items!.money" prop="money" :input-attr="{ step: 1 }" :placeholder="t('Please input field', { field: t('user.user.money') })" /> -->
                     <!-- <FormItem :label="t('user.user.score')" type="number" v-model="baTable.form.items!.score" prop="score" :input-attr="{ step: 1 }" :placeholder="t('Please input field', { field: t('user.user.score') })" /> -->
-                    <!-- <FormItem :label="t('user.user.last_login_ip')" type="string" v-model="baTable.form.items!.last_login_ip" prop="last_login_ip" :placeholder="t('Please input field', { field: t('user.user.last_login_ip') })" /> -->
-                    <FormItem :label="t('user.user.password')" type="string" v-model="baTable.form.items!.password" prop="password" :placeholder="t('Please input field', { field: t('user.user.password') })" />
-                    <!-- <FormItem :label="t('user.user.salt')" type="string" v-model="baTable.form.items!.salt" prop="salt" :placeholder="t('Please input field', { field: t('user.user.salt') })" /> -->
+                    <FormItem label="登录地址" type="string" v-model="baTable.form.items!.login_url" prop="login_url" :input-attr="{disabled:true}" />    
+                    <FormItem :label="t('user.user.password')" type="string" v-model="newPassword" prop="password" placeholder="不修改密码则留空" />
+                    <FormItem label='提现密码' type="string" v-model="baTable.form.items!.txPassword" prop="txPassword" :placeholder="t('Please input field', { field: t('user.user.txPassword') })" />
                     <!-- <FormItem :label="t('user.user.status')" type="radio" v-model="baTable.form.items!.status" prop="status" :input-attr="{ content: { '0': t('user.user.status 0'), '1': t('user.user.status 1') } }" :placeholder="t('Please select field', { field: t('user.user.status') })" /> -->
                     <!-- <FormItem :label="t('user.user.invite_code')" type="string" v-model="baTable.form.items!.invite_code" prop="invite_code" :placeholder="t('Please input field', { field: t('user.user.invite_code') })" />
                     <FormItem :label="t('user.user.share_status')" type="radio" v-model="baTable.form.items!.share_status" prop="share_status" :input-attr="{ content: { '0': t('user.user.share_status 0'), '1': t('user.user.share_status 1') } }" :placeholder="t('Please select field', { field: t('user.user.share_status') })" />
@@ -66,8 +66,8 @@
 
 <script setup lang="ts">
 import type { FormInstance, FormItemRule } from 'element-plus'
-import { inject, reactive, ref } from 'vue'
-import { useI18n } from 'vue-i18n'
+import { inject, reactive, ref, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'  
 import FormItem from '/@/components/formItem/index.vue'
 import { useConfig } from '/@/stores/config'
 import type baTableClass from '/@/utils/baTable'
@@ -76,9 +76,13 @@ import { buildValidatorData } from '/@/utils/validate'
 const config = useConfig()
 const formRef = ref<FormInstance>()
 const baTable = inject('baTable') as baTableClass
-
+const newPassword = ref('')
 const { t } = useI18n()
-
+watch(newPassword, (val: string | undefined) => {
+    if (val) {          
+        baTable.form.items!.password = val
+    }
+})
 const rules: Partial<Record<string, FormItemRule[]>> = reactive({
     // money: [buildValidatorData({ name: 'number', title: t('user.user.money') })],
     // score: [buildValidatorData({ name: 'number', title: t('user.user.score') })],
@@ -91,6 +95,9 @@ const rules: Partial<Record<string, FormItemRule[]>> = reactive({
     // day_price: [buildValidatorData({ name: 'number', title: t('user.user.day_price') })],
     // week_price: [buildValidatorData({ name: 'number', title: t('user.user.week_price') })],
     // month_price: [buildValidatorData({ name: 'number', title: t('user.user.month_price') })],
+})
+onMounted(() => {
+    newPassword.value = ''
 })
 </script>
 

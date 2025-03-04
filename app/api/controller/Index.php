@@ -3,7 +3,9 @@
 namespace app\api\controller;
 
 use app\admin\model\Order;
+use app\admin\model\Pay;
 use app\admin\model\UserMoneyLog;
+use app\admin\model\Video;
 use ba\Tree;
 use think\facade\Cache;
 use think\facade\Log;
@@ -13,79 +15,19 @@ use think\facade\Config;
 use app\common\controller\Frontend;
 use app\common\library\token\TokenExpirationException;
 use app\common\model\User;
-
+use ba\EpayCore;
 class Index extends Frontend
 {
     protected array $noNeedLogin = ['*'];
     protected array $noNeedPermission = ['*'];
-
+    protected $redis;
     public function initialize(): void
     {
+        $this->redis=Cache::store('redis')->handler();
         parent::initialize();
     }
 
-    /**
-     * 前台和会员中心的初始化请求
-     * @throws Throwable
-     */
-    public function indexb(): void
-    {
-        $menus = [];
-        if ($this->auth->isLogin()) {
-            $rules = [];
-            $userMenus = $this->auth->getMenus();
 
-            // 首页加载的规则，验权，但过滤掉会员中心菜单
-            foreach ($userMenus as $item) {
-                if ($item['type'] == 'menu_dir') {
-                    $menus[] = $item;
-                } elseif ($item['type'] != 'menu') {
-                    $rules[] = $item;
-                }
-            }
-            $rules = array_values($rules);
-        } else {
-            // 若是从前台会员中心内发出的请求，要求必须登录，否则会员中心异常
-            $requiredLogin = $this->request->get('requiredLogin/b', false);
-            if ($requiredLogin) {
-
-                // 触发可能的 token 过期异常
-                try {
-                    $token = get_auth_token(['ba', 'user', 'token']);
-                    $this->auth->init($token);
-                } catch (TokenExpirationException) {
-                    $this->error(__('Token expiration'), [], 409);
-                }
-
-                $this->error(__('Please login first'), [
-                    'type' => $this->auth::NEED_LOGIN
-                ], $this->auth::LOGIN_RESPONSE_CODE);
-            }
-
-            $rules = Db::name('user_rule')
-                ->where('status', '1')
-                ->where('no_login_valid', 1)
-                ->where('type', 'in', ['route', 'nav', 'button'])
-                ->order('weigh', 'desc')
-                ->select()
-                ->toArray();
-            $rules = Tree::instance()->assembleChild($rules);
-        }
-
-        $this->success('', [
-            'site' => [
-                'siteName' => get_sys_config('site_name'),
-                'recordNumber' => get_sys_config('record_number'),
-                'version' => get_sys_config('version'),
-                'cdnUrl' => full_url(),
-                'upload' => keys_to_camel_case(get_upload_config(), ['max_size', 'save_name', 'allowed_suffixes', 'allowed_mime_types']),
-            ],
-            'openMemberCenter' => Config::get('buildadmin.open_member_center'),
-            'userInfo' => $this->auth->getUserInfo(),
-            'rules' => $rules,
-            'menus' => $menus,
-        ]);
-    }
 
     public function index()
     {
@@ -93,21 +35,48 @@ class Index extends Frontend
         $ip = $this->request->ip();
         $code = $this->request->param('ic', '0');
         if (empty($code)) $this->error('error', ['fly' => $wrongUrl], 1001);
-        $agent = User::where('invite_code', $code)->field('id,username,single_price,day_price,week_price,month_price,status,share_status,pay_status,theme_id')->find();
+        $agent = User::where('invite_code', $code)->field('id,username,single_price,day_price,week_price,month_price,status,share_status,pay_status,theme_id,free_video')->find();
         if (!$agent) $this->error('error', ['fly' => $wrongUrl], 1002);
         if ($agent['status'] != '1' || $agent['share_status'] != 1) $this->error('error', ['fly' => $wrongUrl], 1003);
         // TODO::判断用户是否黑ip
         $handler = Cache::store('redis')->handler();
-        $handler->sadd('agent:'.$agent['id'].':'.date('Ymd').':ip', ip2long($ip));
+        $handler->sadd('agent:'.$agent['id'].':'.date('Ymd').':ip', ip2long($ip),);
 
 //        $blackIp = Db::name('black_ip')->where('ip', $ip)->find();
 //        if ($blackIp) $this->error('error',['fly'=>$wrongUrl],1004);
-        $payChannel = Db::name('pay')->order('weigh desc')->select();
+        $payChannel = Db::name('pay')->where('status',1)->order('weigh desc')->select();
+        $paidVideo = Cache::store('redis')->get("single:".$ip);
         $data = [
             'agent' => $agent,
             'payChannel' => $payChannel,
+            'freeVideo'=>$agent['free_video'],
+            'paidVideo'=>Video::where('id','in',$paidVideo)->select()->toArray(),
+            'isVip'=>0,
+            'random_hot'=>get_sys_config('random_hot'),
+            'hot_pages'=>get_sys_config('hot_pages'),
         ];
         $this->success('success', $data);
+    }
+
+    public function search()
+    {
+        $keyword = $this->request->get('keyword');
+        $list = Video::where('name', 'like', "%$keyword%")->field('id,name,image,duration')->order('total_purchases')->limit(100)->select();
+        $this->success('success', $list);
+    }
+    public function checkSubscribe()
+    {
+        $vid = $this->request->param('vid');
+        $ip = $this->request->ip();
+        $paidVideos = Cache::store('redis')->get("single:".$ip);
+        $isVip = Cache::store('redis')->get("term:".$ip,0);
+        //查找数组paidVideos中存在vid
+        $isAgentFree = \app\admin\model\User::where('free_video',$vid)->count();
+        if($isVip!=0 || in_array($vid,$paidVideos) || $isAgentFree>0) {
+            $video = Video::query()->find($vid);
+            $this->success('ok',['video'=>$video,'isVip'=>1,'isAgentFree'=>$isAgentFree]);
+        }
+        $this->error('请购买后观看');
     }
 
     public function updateVideoClicks()
@@ -138,6 +107,7 @@ class Index extends Frontend
     {
 
         $params = $this->request->param();
+        $ip = request()->ip();
         // 参数验证
         $validate = validate([
             'user_id' => 'require|number|gt:0',
@@ -177,7 +147,7 @@ class Index extends Frontend
         try {
             $orderData = [
                 'order_sn' => $this->generateOrderSn(),
-                'ip' => request()->ip(),
+                'ip' => $ip,
                 'user_id' => $params['user_id'],
                 'video_id' => $params['video_id'],
                 'subscribe_type' => $params['subscribe_type'],
@@ -190,6 +160,7 @@ class Index extends Frontend
             // 创建订单
             $orderId = Db::name('order')->insertGetId($orderData);
             // TODO: 调用支付接口，获取支付链接或二维码
+
             // 这里需要根据实际的支付渠道来实现
             $payInfo = [
                 'order_sn' => $orderData['order_sn'],
@@ -201,21 +172,82 @@ class Index extends Frontend
             Db::rollback();
             $this->error($e->getMessage());
         }
-        $this->success('创建订单成功', $payInfo);
+        $epay_config = [];
+        $epay_config['apiurl'] = 'http://yy123.15sm.cn/';
+        $epay_config['pid'] = '1308';
+        $epay_config['key'] = '3z0NsO02ygva3BBzuek0KYvWUuvZw2KK';
+        $parameter = array(
+            "pid" => $epay_config['pid'],
+            "type" => 'wxpay',
+            "notify_url" => 'http://lkljk.cn/index.php/api/index/notify',
+            "return_url" => 'http://lkljk.cn/index.php/api/index/returnUrl',
+            "out_trade_no" => $orderData['order_sn'],
+            "name" => '单片',
+            "money"	=> 1.00,
+            'clientip'=>$ip,
+        );
+        $epay = new EpayCore($epay_config);
+        $html_text = $epay->pagePay($parameter);
+        $this->success('创建订单成功', $html_text);
     }
 
+
+    public function returnUrl()
+    {
+        $epay_config = [];
+        $epay_config['apiurl'] = 'http://yy123.15sm.cn/';
+        $epay_config['pid'] = '1308';
+        $epay_config['key'] = '3z0NsO02ygva3BBzuek0KYvWUuvZw2KK';
+        $epay = new EpayCore($epay_config);
+        $verify_result = $epay->verifyReturn();
+        if($verify_result) {//验证成功
+            //商户订单号
+            $out_trade_no = $_GET['out_trade_no'];
+            //支付宝交易号
+            $trade_no = $_GET['trade_no'];
+            //交易状态
+            $trade_status = $_GET['trade_status'];
+            //支付方式
+            $type = $_GET['type'];
+
+            if($_GET['trade_status'] == 'TRADE_SUCCESS') {
+            }
+            else {
+                echo "trade_status=".$_GET['trade_status'];
+            }
+
+            return redirect('http://lkljk.cn/front.html?ic=904gsALb');
+        }
+        else {
+            //验证失败
+            echo "<h3>验证失败</h3>";
+        }
+    }
     public function notify()
     {
         $params = $this->request->param();
         Log::write('支付回调参数：'.json_encode($params), 'notice');
+        $epay_config = [];
+        $epay_config['apiurl'] = 'http://yy123.15sm.cn/';
+        $epay_config['pid'] = '1308';
+        $epay_config['key'] = '3z0NsO02ygva3BBzuek0KYvWUuvZw2KK';
+        $epay = new EpayCore($epay_config);
+        $verify_result = $epay->verifyNotify();
+        if (!$verify_result) {
+            Log::write('支付回调签名验证失败', 'error');
+            return 'fail';
+        }
+        $out_trade_no = $_GET['trade_no'];
+        $trade_no = $_GET['out_trade_no'];
+        $trade_status = $_GET['trade_status'];
+        $type = $_GET['type'];
+        $money = $_GET['money'];
+        if ($_GET['trade_status'] != 'TRADE_SUCCESS') return 'fail';
 
         Db::startTrans();
         try {
-            // 验证签名等安全校验
-            // TODO: 根据实际支付渠道实现签名验证
-
             // 查询订单
-            $order = Db::name('order')->where('order_sn', $params['order_sn'])->find();
+            $order = Db::name('order')->where('order_sn', $out_trade_no)->find();
             if (!$order) {
                 Log::write('订单不存在：'.$params['order_sn'], 'error');
                 return 'fail';
@@ -233,11 +265,6 @@ class Index extends Frontend
                 $is_deducted = true;
                 // 扣量订单状态设为3
                 $status = '3';
-                // 记录扣量统计
-                Cache::store('redis')->inc('total:'.date('Ymd').':deducted_orders', 1);
-                Cache::store('redis')->inc('total:'.date('Ymd').':deducted_amount', $order['money']);
-                Cache::store('redis')->inc('total:deducted_orders', 1);
-                Cache::store('redis')->inc('total:deducted_amount', $order['money']);
             } else {
                 $status = '1';
             }
@@ -256,48 +283,61 @@ class Index extends Frontend
             ];
 
             Db::name('order')->where('id', $order['id'])->update($updateData);
-
             // 非扣量订单才处理代理分成和统计
             if (!$is_deducted) {
                 // 处理代理分成等业务逻辑
                 if ($agent) {
-                    UserMoneyLog::create([
-                        'user_id' => $agent['id'],
-                        'money' => $agent_income,
-                        'memo'=> '订单收入 '.$order['order_sn'],
-                    ]);
+                    $agent->save(['money'=>$agent['money'] + $agent_income]);
                 }
+            }
+            //支付通道统计:
+            $pay = Pay::where('id', $order['pay_id'])->find();
+            if ($pay) {
+                $pay->save([
+                    'total_order'=>$pay['total_order']+1,
+                    'total_money'=>$pay['total_money']+$order['money'],
+                    'today_order'=>$pay['today_order']+1,
+                    'today_money'=>$pay['today_money']+$order['money'
+                        ]]);
+            }
+            Db::commit();
 
-                
+
+            //redis统计
+            if ($is_deducted) {
+                //统计总扣量
+                Cache::store('redis')->inc('total:'.date('Ymd').':deducted_orders', 1);
+                Cache::store('redis')->inc('total:'.date('Ymd').':deducted_amount', $order['money']);
+                Cache::store('redis')->inc('total:deducted_orders', 1);
+                Cache::store('redis')->inc('total:deducted_amount', $order['money']);
+                //统计代理扣量
+                Cache::store('redis')->inc('agent:'.$agent['id'].':'.date('Ymd').':deducted_orders', 1);
+                Cache::store('redis')->inc('agent:'.$agent['id'].':'.date('Ymd').':deducted_amount', $order['money']);
+            }else{
                 //代理相关统计
                 Cache::store('redis')->inc('agent:'.$order['user_id'].':'.date('Ymd').':total_order', 1);
                 Cache::store('redis')->inc('agent:'.$order['user_id'].':'.date('Ymd').':total_income', (int)($agent_income*100));
                 Cache::store('redis')->inc('agent:'.$order['user_id'].':'.date('Ymd').':total_sell', $order['money']);
-            }else{
-                //统计代理扣量
-                Cache::store('redis')->inc('agent:'.$agent['id'].':'.date('Ymd').':deducted_orders', 1);
-                Cache::store('redis')->inc('agent:'.$agent['id'].':'.date('Ymd').':deducted_amount', $order['money']);
             }
             //订阅写入redis
             if ($order['subscribe_type'] == 'single') {
-                Cache::store('redis')->tag('subscribe')->set("single:".$order['ip'], $order['video_id'], 0);
+//                Cache::store('redis')->tag('subscribe')->set("single:".$order['ip'], $order['video_id'], 0);
+                Cache::store('redis')->push("single:".$order['ip'], $order['video_id']);
             }
             if ($order['subscribe_type'] == 'day') {
-                Cache::store('redis')->tag('subscribe')->set("day:".$order['ip'], true, 86400);
+                Cache::store('redis')->tag('subscribe')->set("term:".$order['ip'], $order['video_id'], 86400);
             }
             if ($order['subscribe_type'] == 'week') {
-                Cache::store('redis')->tag('subscribe')->set("week:".$order['ip'], true, 604800);
+                Cache::store('redis')->tag('subscribe')->set("term:".$order['ip'], $order['video_id'], 604800);
             }
             if ($order['subscribe_type'] == 'month') {
-                Cache::store('redis')->tag('subscribe')->set("month:".$order['ip'], true, 2592000);
+                Cache::store('redis')->tag('subscribe')->set("term:".$order['ip'], $order['video_id'], 2592000);
             }
 
             //总后台统计
             Cache::store('redis')->inc('total:'.date('Ymd').':total_order', 1);
             Cache::store('redis')->inc('total:'.date('Ymd').':total_income', $order['money']);
 
-
-            Db::commit();
             return 'success';
 
         } catch (\Exception $e) {
@@ -309,14 +349,28 @@ class Index extends Frontend
 
     public function tongji()
     {
+        //代理相关
         $users = User::where('id', '>', 0)->select();
         foreach ($users as $user) {
             $user->save([
                 'lastday_sell'=>Cache::store('redis')->get('agent:'.$user['id'].':'.date('Ymd').':total_sell',0),
                 'lastday_money'=>$user['money'],
+                'today_order'=>0,
+                'today_money'=>0,
             ]);
         }
         Cache::store('redis')->set('total:'.date('Ymd',strtotime('-1 day')).':total_agent_money', User::where('status', 1)->sum('money'), 0);
+
+        //支付通道统计
+        $pays = Db::name('pay')->where('id', '>', 0)->select();
+        foreach ($pays as $pay) {
+            $pay->save([
+                'lastday_order'=>$pay['today_order'],
+                'lastday_money'=>$pay['lastday_money'],
+                'today_order'=>0,
+                'today_money'=>0,
+            ]);
+        }
         $this->success('统计成功');
     }
 
@@ -335,6 +389,4 @@ class Index extends Frontend
         $order_sn = $order_id_main . str_pad((100 - $order_id_sum % 100) % 100, 2, '0', STR_PAD_LEFT);
         return $order_sn;
     }
-    
-    
 }

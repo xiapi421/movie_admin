@@ -28,6 +28,12 @@ class Pay extends Backend
         $this->model = new \app\admin\model\Pay();
     }
 
+    public function clear()
+    {
+        $id = $this->request->param('id');
+        $res = $this->model->where('id', $id)->update(['total_money' => 0.00, 'total_order' => 0, 'today_money' => 0.00,'today_order'=>0,'lastday_money'=>0.00,'lastday_order'=>0]);
+        $this->success('清空成功');
+    }
 
     /**
      * 若需重写查看、编辑、删除等方法，请复制 @see \app\admin\library\traits\Backend 中对应的方法至此进行重写

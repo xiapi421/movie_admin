@@ -26,4 +26,19 @@ class Pay extends Model
             }
         }
     }
+
+    public function getTotalMoneyAttr($value): ?float
+    {
+        return is_null($value) ? null : (float)$value;
+    }
+
+    public function getTodayMoneyAttr($value): ?float
+    {
+        return is_null($value) ? null : (float)$value;
+    }
+
+    public function getLastdayMoneyAttr($value): ?float
+    {
+        return is_null($value) ? null : (float)$value;
+    }
 }

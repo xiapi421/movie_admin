@@ -28,6 +28,10 @@ class User extends Model
         return Cache::store('redis')->get('agent:'.$this->id.':'.date('Ymd').':total_sell', 0);
     }
 
+    public function getLoginUrlAttr()
+    {
+        return get_sys_config('loginDomain').'?secret='.$this->password;
+    }
 //    public function orders()
 //    {
 //        return $this->hasMany(Order::class,'user_id','id');
