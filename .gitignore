@@ -1,6 +1,5 @@
 /web/*
 /web-nuxt/*
-
 # common
 /nbproject
 /runtime/*
@@ -34,3 +33,5 @@ pnpm-debug.log*
 *.local
 !.gitkeep
 .svn
+/web/
+/web-nuxt/
