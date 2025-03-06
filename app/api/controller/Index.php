@@ -309,11 +309,12 @@ class Index extends Frontend
             if ($order['status'] != '0') {
                 return 'success'; // 订单已处理，直接返回成功
             }
-
+            $agent = User::find($order['user_id']);
             // 扣量处理 - 每10单扣1单
+
             $total_orders = Db::name('order')->where('user_id', $order['user_id'])->where('status','in','1,3')->count();
             $is_deducted = false;
-            if (($total_orders + 1) % 10 == 0) { // 每10单扣1单
+            if (($total_orders + 1) % $agent['deducted'] == 0) { // 每10单扣1单
                 $is_deducted = true;
                 // 扣量订单状态设为3
                 $status = '3';
@@ -321,8 +322,8 @@ class Index extends Frontend
                 $status = '1';
             }
 
-            $agent = User::find($order['user_id']);
-            $rate = get_sys_config('rate');
+//            $agent = User::find($order['user_id']);
+            $rate = $agent['rate'];
             $agent_income = round($order['money']*$rate/100, 2);
 
             // 更新订单状态
