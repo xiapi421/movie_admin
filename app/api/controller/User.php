@@ -21,7 +21,7 @@ use app\api\validate\User as UserValidate;
 
 class User extends Frontend
 {
-    protected array $noNeedLogin = ['checkIn', 'logout', 'login','getAgentBySecret'];
+    protected array $noNeedLogin = ['checkIn', 'logout', 'login','getAgentBySecret','info'];
 
     protected array $noNeedPermission = ['index'];
 
@@ -30,6 +30,13 @@ class User extends Frontend
         parent::initialize();
     }
 
+    public function info()
+    {
+        $data = [
+            'site_name'=>get_sys_config('site_name'),
+        ];
+        $this->success('请求成功', $data);
+    }
     public function getAgentBySecret()
     {
         $secret = $this->request->param('secret');
@@ -41,11 +48,11 @@ class User extends Frontend
 
     public function login()
     {
-        if ($this->auth->isLogin()) {
-            $this->success(__('You have already logged in. There is no need to log in again~'), [
-                'type' => $this->auth::LOGGED_IN
-            ], $this->auth::LOGIN_RESPONSE_CODE);
-        }
+//        if ($this->auth->isLogin()) {
+//            $this->success(__('You have already logged in. There is no need to log in again~'), [
+//                'type' => $this->auth::LOGGED_IN
+//            ], $this->auth::LOGIN_RESPONSE_CODE);
+//        }
         $params = $this->request->post(['username', 'password']);
         $res = $this->auth->login($params['username'], $params['password'], true);
         if (isset($res) && $res === true) {
@@ -71,12 +78,10 @@ class User extends Frontend
 
     public function logout(): void
     {
-        if ($this->request->isPost()) {
             $refreshToken = $this->request->post('refreshToken', '');
             if ($refreshToken) Token::delete((string)$refreshToken);
             $this->auth->logout();
             $this->success();
-        }
     }
 
     public function index()
@@ -132,12 +137,7 @@ class User extends Frontend
         if ($payload['money'] > $agent['money']) $this->error('余额不足');
         unset($payload['txPassword']);
         Withdraw::create($payload);
-        $agent->setDec('money', $payload['money']);
-//        UserMoneyLog::create([
-//            'user_id' => $agent['id'],
-//            'money' => $payload['money'],
-//            'memo' => '申请提现',
-//        ]);
+        $agent->save(['money'=>$agent['money']-$payload['money']]);
         $this->success('申请提现成功');
     }
 

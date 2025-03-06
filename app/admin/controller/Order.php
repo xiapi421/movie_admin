@@ -46,7 +46,12 @@ class Order extends Backend
          * 3. paginate 数据集可使用链式操作 each(function($item, $key) {}) 遍历处理
          */
         list($where, $alias, $limit, $order) = $this->queryBuilder();
-        $res = $this->model
+//        $where[]=[
+//            'status'=>[
+//                'in'=>'1,3'
+//            ]
+//        ];
+        $res = $this->model->whereIn('order.status','1,3')
             ->withJoin($this->withJoinTable, $this->withJoinType)
             ->alias($alias)
             ->where($where)
