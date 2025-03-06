@@ -78,4 +78,28 @@ class Withdraw extends Backend
         }
         $this->success('操作成功');
     }
+
+    public function getWithdrawCount()
+    {
+        $waitAmount = $this->model->where('status', 0)->sum('money');
+
+        // 今日已确认金额
+        $todayStart = strtotime('today');
+        $todayEnd = strtotime('tomorrow') - 1;
+        $todayAmount = $this->model->where('status', 1)
+            ->where('handle_time', 'between', [$todayStart, $todayEnd])
+            ->sum('money');
+
+        // 昨日已确认金额
+        $yesterdayStart = strtotime('yesterday');
+        $yesterdayEnd = strtotime('today') - 1;
+        $yesterdayAmount = $this->model->where('status', 1)
+            ->where('handle_time', 'between', [$yesterdayStart, $yesterdayEnd])
+            ->sum('money');
+        $this->success('请求成功', [
+           'waitAmount' => $waitAmount,
+           'todayAmount' => $todayAmount,
+           'yesterdayAmount' => $yesterdayAmount,
+        ]);
+    }
 }
