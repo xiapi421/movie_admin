@@ -5,7 +5,7 @@
 
 return [
     // 允许跨域访问的域名
-    'cors_request_domain'   => 'localhost,127.0.0.1,localhost:5173,www.movie.com,localhost:5174,oldb.movie.com',
+    'cors_request_domain'   => 'localhost,127.0.0.1,localhost:5173,47.76.212.222,localhost:5174,oldb.movie.com',
     // 是否开启会员登录验证码
     'user_login_captcha'    => false,
     // 是否开启管理员登录验证码
