@@ -2,7 +2,6 @@ web/
 web-nuxt/
 # common
 /nbproject
-/runtime/*
 /install
 node_modules
 dist
