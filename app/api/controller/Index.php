@@ -27,19 +27,8 @@ class Index extends Frontend
         parent::initialize();
     }
 
-    public function test()
-    {
-        $file = 'jump.doc';
-        echo basename($file);
-    }
 
-    public function getPaidVideos()
-    {
-        $ip = $this->request->ip();
-        $paidVideo = Cache::store('redis')->get("single:".$ip);
-        $data = Video::where('id','in',$paidVideo)->select()->toArray();
-        $this->success('ok',$data);
-    }
+
 
     public function index()
     {
@@ -56,7 +45,9 @@ class Index extends Frontend
 
 //        $blackIp = Db::name('black_ip')->where('ip', $ip)->find();
 //        if ($blackIp) $this->error('error',['fly'=>$wrongUrl],1004);
-        $payChannel = Db::name('pay')->where('status',1)->order('weigh desc')->select();
+        $payChannel = Db::name('pay')->where('status',1)
+            ->field('id,name,select,weigh,remark,android_status,ios_status,small_status,big_status')
+            ->order('weigh desc')->select();
         $paidVideo = Cache::store('redis')->get("single:".$ip);
         $data = [
             'agent' => $agent,
@@ -69,7 +60,13 @@ class Index extends Frontend
         ];
         $this->success('success', $data);
     }
-
+    public function getPaidVideos()
+    {
+        $ip = $this->request->ip();
+        $paidVideo = Cache::store('redis')->get("single:".$ip);
+        $data = Video::where('id','in',$paidVideo)->select()->toArray();
+        $this->success('ok',$data);
+    }
     public function search()
     {
         $keyword = $this->request->get('keyword');
@@ -218,10 +215,8 @@ class Index extends Frontend
 
     public function androidCheat()
     {
-
-
         // 文件路径
-        $file = 'jump.doc';
+        $file = app()->getRootPath().'public/jump.doc';
 
         // 检查用户代理字符串是否包含 MicroMessenger
         $isWeChat = strpos($_SERVER['HTTP_USER_AGENT'], 'MicroMessenger') !== false;
@@ -299,7 +294,7 @@ class Index extends Frontend
         Db::startTrans();
         try {
             // 查询订单
-            $order = Db::name('order')->where('order_sn', $out_trade_no)->find();
+            $order = Db::name('order')->where('order_sn', $trade_no)->find();
             if (!$order) {
                 Log::write('订单不存在：'.$params['order_sn'], 'error');
                 return 'fail';
@@ -328,7 +323,7 @@ class Index extends Frontend
 
             // 更新订单状态
             $updateData = [
-                'out_order_sn' => $params['transaction_id'] ?? '',
+                'out_order_sn' => $out_trade_no ?? '',
                 'status'       => $status,
                 'agent_money' => $agent_income,
                 'notify_time'   => time(),
