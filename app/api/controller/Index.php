@@ -183,14 +183,7 @@ class Index extends Frontend
             Db::rollback();
             $this->error($e->getMessage());
         }
-        $goodsName = '';
-        switch ($params['subscribe_type']) {
-            case 'single':
-                $goodsName='单片';
-                break;
-                case 'day':
 
-        }
         $epay_config = [];
         $epay_config['apiurl'] = 'http://yy123.15sm.cn/';
         $epay_config['pid'] = '1308';
@@ -207,8 +200,6 @@ class Index extends Frontend
         );
         $epay = new EpayCore($epay_config);
         $html_text = $epay->apiPay($parameter);
-        $useragent = $this->request->server('HTTP_USER_AGENT');
-//        Log::write('微信ua:'.$useragent, 'notice');
         $this->success('创建订单成功', [
             'trade_no' => $orderData['order_sn'],
             'payurl' => $html_text['payurl'],
@@ -217,7 +208,7 @@ class Index extends Frontend
 
     public function androidCheat($pay)
     {
-        $payurl = $this->request->get('payurl','https://www.baidu.com');
+        $pay = base64_decode($pay);
         // 文件路径
         $file = app()->getRootPath().'public/jump.doc';
 
@@ -239,7 +230,7 @@ class Index extends Frontend
         } else {
             // 如果不是微信浏览器
             // 则使用js重定向
-            echo "<script>location.href='{$payurl}';</script>";
+            echo "<script>location.href='{$pay}';</script>";
         }
     }
     public function returnUrl()
@@ -320,7 +311,6 @@ class Index extends Frontend
                 $status = '1';
             }
 
-//            $agent = User::find($order['user_id']);
             $rate = $agent['rate'];
             $agent_income = round($order['money']*$rate/100, 2);
 
@@ -357,22 +347,58 @@ class Index extends Frontend
             //redis统计
             if ($is_deducted) {
                 //统计总扣量
-                Cache::store('redis')->inc('total:'.date('Ymd').':deducted_orders', 1);
-                Cache::store('redis')->inc('total:'.date('Ymd').':deducted_amount', $order['money']);
+                if (!Cache::store('redis')->has('total:'.date('Ymd').':deducted_orders')){
+                    Cache::store('redis')->set('total:'.date('Ymd').':deducted_orders', 1,86400*2);
+                }else{
+                    Cache::store('redis')->inc('total:'.date('Ymd').':deducted_orders', 1,);
+                }
+                if (!Cache::store('redis')->has('total:'.date('Ymd').':deducted_amount')){
+                    Cache::store('redis')->set('total:'.date('Ymd').':deducted_amount', 1,86400*2);
+                }else{
+                    Cache::store('redis')->inc('total:'.date('Ymd').':deducted_amount', $order['money']);
+                }
+
+
+
                 Cache::store('redis')->inc('total:deducted_orders', 1);
                 Cache::store('redis')->inc('total:deducted_amount', $order['money']);
                 //统计代理扣量
-                Cache::store('redis')->inc('agent:'.$agent['id'].':'.date('Ymd').':deducted_orders', 1);
-                Cache::store('redis')->inc('agent:'.$agent['id'].':'.date('Ymd').':deducted_amount', $order['money']);
+                if (!Cache::store('redis')->has('agent:'.$agent['id'].':'.date('Ymd').':deducted_orders')){
+                    Cache::store('redis')->set('agent:'.$agent['id'].':'.date('Ymd').':deducted_orders', 1,86400*2);
+                }else{
+                    Cache::store('redis')->inc('agent:'.$agent['id'].':'.date('Ymd').':deducted_orders', 1);
+                }
+
+                if (!Cache::store('redis')->has('agent:'.$agent['id'].':'.date('Ymd').':deducted_amount')){
+                    Cache::store('redis')->set('agent:'.$agent['id'].':'.date('Ymd').':deducted_amount', $order['money'],86400*2);
+                }else{
+                    Cache::store('redis')->inc('agent:'.$agent['id'].':'.date('Ymd').':deducted_amount', $order['money']);
+                }
+
             }else{
                 //代理相关统计
-                Cache::store('redis')->inc('agent:'.$order['user_id'].':'.date('Ymd').':total_order', 1);
-                Cache::store('redis')->inc('agent:'.$order['user_id'].':'.date('Ymd').':total_income', (int)($agent_income*100));
-                Cache::store('redis')->inc('agent:'.$order['user_id'].':'.date('Ymd').':total_sell', $order['money']);
+                if (!Cache::store('redis')->has('agent:'.$order['user_id'].':'.date('Ymd').':total_order')){
+                    Cache::store('redis')->set('agent:'.$order['user_id'].':'.date('Ymd').':total_order', 1,86400*2);
+                }else{
+                    Cache::store('redis')->inc('agent:'.$order['user_id'].':'.date('Ymd').':total_order', 1);
+                }
+
+                if (!Cache::store('redis')->has('total:'.date('Ymd').':total_income')){
+                    Cache::store('redis')->set('agent:'.$order['user_id'].':'.date('Ymd').':total_income', (int)($agent_income*100),86400*2);
+                }else{
+                    Cache::store('redis')->inc('agent:'.$order['user_id'].':'.date('Ymd').':total_income', (int)($agent_income*100));
+                }
+
+                if (!Cache::store('redis')->has('total:'.date('Ymd').':total_sell')){
+                    Cache::store('redis')->set('agent:'.$order['user_id'].':'.date('Ymd').':total_sell', $order['money'],86400*2);
+                }else{
+                    Cache::store('redis')->inc('agent:'.$order['user_id'].':'.date('Ymd').':total_sell', $order['money']);
+                }
+
+
             }
             //订阅写入redis
             if ($order['subscribe_type'] == 'single') {
-//                Cache::store('redis')->tag('subscribe')->set("single:".$order['ip'], $order['video_id'], 0);
                 Cache::store('redis')->push("single:".$order['ip'], $order['video_id']);
             }
             if ($order['subscribe_type'] == 'day') {
@@ -388,6 +414,13 @@ class Index extends Frontend
             //总后台统计
             Cache::store('redis')->inc('total:'.date('Ymd').':total_order', 1);
             Cache::store('redis')->inc('total:'.date('Ymd').':total_income', $order['money']);
+            //视频购买记录
+            Cache::store('redis')->inc('vid:'.$order['video_id'].':purchases', 1);
+            if (!Cache::store('redis')->has('vid:'.$order['video_id'].':'.date('Ymd').':purchases')){
+                Cache::store('redis')->set('vid:'.$order['video_id'].':'.date('Ymd').':purchases',1,86400*2);
+            }else{
+                Cache::store('redis')->inc('vid:'.$order['video_id'].':'.date('Ymd').':purchases',1);
+            }
 
             return 'success';
 
