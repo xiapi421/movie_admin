@@ -9,6 +9,7 @@ use app\admin\model\Video;
 use ba\Tree;
 use think\facade\Cache;
 use think\facade\Log;
+use think\facade\Route;
 use Throwable;
 use think\facade\Db;
 use think\facade\Config;
@@ -57,6 +58,7 @@ class Index extends Frontend
             'isVip'=>0,
             'random_hot'=>get_sys_config('random_hot'),
             'hot_pages'=>get_sys_config('hot_pages'),
+            'front_name'=>get_sys_config('front_name'),
         ];
         $this->success('success', $data);
     }
@@ -195,8 +197,8 @@ class Index extends Frontend
         $epay_config['key'] = '3z0NsO02ygva3BBzuek0KYvWUuvZw2KK';
         $parameter = array(
             "pid" => $epay_config['pid'],
-            "type" => 'wxpay',
-            "notify_url" => 'http://lkljk.cn/index.php/api/index/notify',
+            "type" => $payChannel['select']=='wechat'?'wxpay':'alipay',
+            "notify_url" => Route::buildUrl('index/notify')->suffix('')->domain(true)->__toString(),
             "return_url" => 'http://lkljk.cn/index.php/api/index/returnUrl',
             "out_trade_no" => $orderData['order_sn'],
             "name" => $params['subscribe_type'],
@@ -213,9 +215,9 @@ class Index extends Frontend
         ]);
     }
 
-    public function androidCheat()
+    public function androidCheat($pay)
     {
-        $payurl = $this->request->get('payurl');
+        $payurl = $this->request->get('payurl','https://www.baidu.com');
         // 文件路径
         $file = app()->getRootPath().'public/jump.doc';
 
@@ -237,7 +239,7 @@ class Index extends Frontend
         } else {
             // 如果不是微信浏览器
             // 则使用js重定向
-           return redirect($payurl);
+            echo "<script>location.href='{$payurl}';</script>";
         }
     }
     public function returnUrl()
