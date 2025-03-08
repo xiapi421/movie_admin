@@ -4,5 +4,8 @@
 // +----------------------------------------------------------------------
 return [
     // 指令定义
-    'commands' => [],
+    'commands' => [
+        'hello' => 'app\command\Hello',
+        'tongji' => 'app\command\Tongji',
+    ],
 ];

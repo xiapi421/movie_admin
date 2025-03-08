@@ -50,30 +50,30 @@ class Videos extends Model
         return is_null($value) ? null : (float)$value;
     }
 
-    public function getTotalViewsAttr()
-    {
-        return Cache::store('redis')->get('vid:'.$this->id.':view',0);
-    }
-    public function getTodayViewsAttr()
-    {
-        return Cache::store('redis')->get('vid:'.$this->id.':'.date('Ymd').':view',0);
-    }
-
-    public function getTotalClicksAttr()
-    {
-        return Cache::store('redis')->get('vid:'.$this->id.':click',0);
-    }
-    public function getTodayClicksAttr()
-    {
-        return Cache::store('redis')->get('vid:'.$this->id.':'.date('Ymd').':click',0);
-    }
-
-    public function getTotalPurchasesAttr()
-    {
-        return Cache::store('redis')->get('vid:'.$this->id.':purchases',0);
-    }
-    public function getTodayPurchasesAttr()
-    {
-        return Cache::store('redis')->get('vid:'.$this->id.':'.date('Ymd').':purchases',0);
-    }
+//    public function getTotalViewsAttr()
+//    {
+//        return Cache::store('redis')->get('vid:'.$this->id.':view',0);
+//    }
+//    public function getTodayViewsAttr()
+//    {
+//        return Cache::store('redis')->get('vid:'.$this->id.':'.date('Ymd').':view',0);
+//    }
+//
+//    public function getTotalClicksAttr()
+//    {
+//        return Cache::store('redis')->get('vid:'.$this->id.':click',0);
+//    }
+//    public function getTodayClicksAttr()
+//    {
+//        return Cache::store('redis')->get('vid:'.$this->id.':'.date('Ymd').':click',0);
+//    }
+//
+//    public function getTotalPurchasesAttr()
+//    {
+//        return Cache::store('redis')->get('vid:'.$this->id.':purchases',0);
+//    }
+//    public function getTodayPurchasesAttr()
+//    {
+//        return Cache::store('redis')->get('vid:'.$this->id.':'.date('Ymd').':purchases',0);
+//    }
 }
