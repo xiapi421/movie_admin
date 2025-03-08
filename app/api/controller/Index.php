@@ -4,17 +4,12 @@ namespace app\api\controller;
 
 use app\admin\model\Order;
 use app\admin\model\Pay;
-use app\admin\model\UserMoneyLog;
-use app\admin\model\Video;
-use ba\Tree;
+use app\admin\model\Videos as Video;
 use think\facade\Cache;
 use think\facade\Log;
 use think\facade\Route;
-use Throwable;
 use think\facade\Db;
-use think\facade\Config;
 use app\common\controller\Frontend;
-use app\common\library\token\TokenExpirationException;
 use app\common\model\User;
 use ba\EpayCore;
 class Index extends Frontend
@@ -170,40 +165,33 @@ class Index extends Frontend
             ];
             // 创建订单
             $orderId = Db::name('order')->insertGetId($orderData);
-            // TODO: 调用支付接口，获取支付链接或二维码
-
-            // 这里需要根据实际的支付渠道来实现
-            $payInfo = [
-                'order_sn' => $orderData['order_sn'],
-                'money' => $price, // 这里需要根据实际订阅类型计算金额
-                'pay_url' => 'https://www.baidu.com' // 这里需要对接实际的支付接口
-            ];
+            //调用支付接口，获取支付链接或二维码
+            $epay_config = [];
+            $epay_config['apiurl'] = 'http://yy123.15sm.cn/';
+            $epay_config['pid'] = '1308';
+            $epay_config['key'] = '3z0NsO02ygva3BBzuek0KYvWUuvZw2KK';
+            $parameter = array(
+                "pid" => $epay_config['pid'],
+                "type" => $payChannel['select']=='wechat'?'wxpay':'alipay',
+                "notify_url" => Route::buildUrl('index/notify')->suffix('')->domain(true)->__toString(),
+                "return_url" => 'http://lkljk.cn/index.php/api/index/returnUrl',
+                "out_trade_no" => $orderData['order_sn'],
+                "name" => $params['subscribe_type'],
+                "money"	=> $price,
+                'clientip'=>$ip,
+            );
+            $epay = new EpayCore($epay_config);
+            $html_text = $epay->apiPay($parameter);
+            Cache::store('redis')->set("order:".$orderData['order_sn'],0,86400);
             Db::commit();
+            $this->success('创建订单成功', [
+                'trade_no' => $orderData['order_sn'],
+                'payurl' => $html_text['payurl'],
+            ]);
         } catch (\Exception $e) {
             Db::rollback();
             $this->error($e->getMessage());
         }
-
-        $epay_config = [];
-        $epay_config['apiurl'] = 'http://yy123.15sm.cn/';
-        $epay_config['pid'] = '1308';
-        $epay_config['key'] = '3z0NsO02ygva3BBzuek0KYvWUuvZw2KK';
-        $parameter = array(
-            "pid" => $epay_config['pid'],
-            "type" => $payChannel['select']=='wechat'?'wxpay':'alipay',
-            "notify_url" => Route::buildUrl('index/notify')->suffix('')->domain(true)->__toString(),
-            "return_url" => 'http://lkljk.cn/index.php/api/index/returnUrl',
-            "out_trade_no" => $orderData['order_sn'],
-            "name" => $params['subscribe_type'],
-            "money"	=> $price,
-            'clientip'=>$ip,
-        );
-        $epay = new EpayCore($epay_config);
-        $html_text = $epay->apiPay($parameter);
-        $this->success('创建订单成功', [
-            'trade_no' => $orderData['order_sn'],
-            'payurl' => $html_text['payurl'],
-        ]);
     }
 
     public function androidCheat($pay)
@@ -421,7 +409,8 @@ class Index extends Frontend
             }else{
                 Cache::store('redis')->inc('vid:'.$order['video_id'].':'.date('Ymd').':purchases',1);
             }
-
+            //订单redis写入
+            Cache::store('redis')->set("order:".$order['order_sn'],1,86400);
             return 'success';
 
         } catch (\Exception $e) {
@@ -435,9 +424,14 @@ class Index extends Frontend
     {
         $tradeno = $this->request->param('tradeno');
         if (empty($tradeno)) $this->error('无此订单');
-        $order = Order::where('order_sn', $tradeno)->field('id,order_sn,ip,video_id,subscribe_type,pay_id,status')->find();
-        if (!$order) $this->error('无此订单');
-        $this->success('查询成功', $order);
+//        $order = Order::where('order_sn', $tradeno)->field('id,order_sn,ip,video_id,subscribe_type,pay_id,status')->find();
+//        if (!$order) $this->error('无此订单');
+        $status = Cache::store('redis')->get("order:".$tradeno,'0');
+        $data= [
+            'order_sn'=>$tradeno,
+            'status' => $status,
+        ];
+        $this->success('查询成功', $data);
     }
     public function tongji()
     {
