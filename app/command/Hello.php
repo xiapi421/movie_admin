@@ -58,5 +58,6 @@ class Hello extends Command
                 ]
             );
         }
+        echo '更新视频统计信息完成'.date('Y-m-d H:i:s')."\n";
     }
 }

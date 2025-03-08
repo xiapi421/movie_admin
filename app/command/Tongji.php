@@ -3,6 +3,7 @@ declare (strict_types = 1);
 
 namespace app\command;
 
+use app\admin\model\Pay;
 use app\common\model\User;
 use think\console\Command;
 use think\console\Input;
@@ -36,7 +37,7 @@ class Tongji extends Command
         Cache::store('redis')->set('total:'.date('Ymd',strtotime('-1 day')).':total_agent_money', User::where('status', 1)->sum('money'), 0);
 
         //支付通道统计
-        $pays = Db::name('pay')->where('id', '>', 0)->select();
+        $pays = Pay::where('id', '>', 0)->select();
         foreach ($pays as $pay) {
             $pay->save([
                 'lastday_order'=>$pay['today_order'],
@@ -45,5 +46,6 @@ class Tongji extends Command
                 'today_money'=>0,
             ]);
         }
+        echo "统计完成".date('Y-m-d H:i:s')."\n";
     }
 }
