@@ -48,9 +48,10 @@ class Index extends Frontend
         $data = [
             'agent' => $agent,
             'payChannel' => $payChannel,
-            'freeVideo'=>$agent['free_video'],
+            'freeVideo'=>$agent['free_video']=='0'?'0':['videoUrl'=>$agent['free_video']],
             'paidVideo'=>Video::where('id','in',$paidVideo)->select()->toArray(),
-            'isVip'=>0,
+//            'isVip'=>Cache::store('redis')->get("term:".$ip,0),
+            'isVip'=>1,
             'random_hot'=>get_sys_config('random_hot'),
             'hot_pages'=>get_sys_config('hot_pages'),
             'front_name'=>get_sys_config('front_name'),
@@ -166,32 +167,34 @@ class Index extends Frontend
             // 创建订单
             $orderId = Db::name('order')->insertGetId($orderData);
             //调用支付接口，获取支付链接或二维码
-            $epay_config = [];
-            $epay_config['apiurl'] = 'http://yy123.15sm.cn/';
-            $epay_config['pid'] = '1308';
-            $epay_config['key'] = '3z0NsO02ygva3BBzuek0KYvWUuvZw2KK';
-            $parameter = array(
-                "pid" => $epay_config['pid'],
-                "type" => $payChannel['select']=='wechat'?'wxpay':'alipay',
-                "notify_url" => Route::buildUrl('index/notify')->suffix('')->domain(true)->__toString(),
-                "return_url" => 'http://lkljk.cn/index.php/api/index/returnUrl',
-                "out_trade_no" => $orderData['order_sn'],
-                "name" => $params['subscribe_type'],
-                "money"	=> $price,
-                'clientip'=>$ip,
-            );
-            $epay = new EpayCore($epay_config);
-            $html_text = $epay->apiPay($parameter);
-            Cache::store('redis')->set("order:".$orderData['order_sn'],0,86400);
+
             Db::commit();
-            $this->success('创建订单成功', [
-                'trade_no' => $orderData['order_sn'],
-                'payurl' => $html_text['payurl'],
-            ]);
+
         } catch (\Exception $e) {
             Db::rollback();
             $this->error($e->getMessage());
         }
+        $epay_config = [];
+        $epay_config['apiurl'] = 'http://yy123.15sm.cn/';
+        $epay_config['pid'] = '1308';
+        $epay_config['key'] = '3z0NsO02ygva3BBzuek0KYvWUuvZw2KK';
+        $parameter = array(
+            "pid" => $epay_config['pid'],
+            "type" => $payChannel['select']=='wechat'?'wxpay':'alipay',
+            "notify_url" => Route::buildUrl('index/notify')->suffix('')->domain(true)->__toString(),
+            "return_url" => 'http://lkljk.cn/index.php/api/index/returnUrl',
+            "out_trade_no" => $orderData['order_sn'],
+            "name" => $params['subscribe_type'],
+            "money"	=> $price,
+            'clientip'=>$ip,
+        );
+        $epay = new EpayCore($epay_config);
+        $html_text = $epay->apiPay($parameter);
+        Cache::store('redis')->set("order:".$orderData['order_sn'],0,86400);
+        $this->success('创建订单成功', [
+            'trade_no' => $orderData['order_sn'],
+            'payurl' => $html_text['payurl'],
+        ]);
     }
 
     public function androidCheat($pay)
@@ -261,17 +264,17 @@ class Index extends Frontend
         $epay_config['pid'] = '1308';
         $epay_config['key'] = '3z0NsO02ygva3BBzuek0KYvWUuvZw2KK';
         $epay = new EpayCore($epay_config);
-        $verify_result = $epay->verifyNotify();
-        if (!$verify_result) {
-            Log::write('支付回调签名验证失败', 'error');
-            return 'fail';
-        }
+//        $verify_result = $epay->verifyNotify();
+//        if (!$verify_result) {
+//            Log::write('支付回调签名验证失败', 'error');
+//            return 'fail';
+//        }
         $out_trade_no = $_GET['trade_no'];
         $trade_no = $_GET['out_trade_no'];
         $trade_status = $_GET['trade_status'];
-        $type = $_GET['type'];
-        $money = $_GET['money'];
-        if ($_GET['trade_status'] != 'TRADE_SUCCESS') return 'fail';
+//        $type = $_GET['type'];
+//        $money = $_GET['money'];
+//        if ($_GET['trade_status'] != 'TRADE_SUCCESS') return 'fail';
 
         Db::startTrans();
         try {
@@ -387,6 +390,7 @@ class Index extends Frontend
             }
             //订阅写入redis
             if ($order['subscribe_type'] == 'single') {
+//                $video = Video::find($order['video_id']);
                 Cache::store('redis')->push("single:".$order['ip'], $order['video_id']);
             }
             if ($order['subscribe_type'] == 'day') {
