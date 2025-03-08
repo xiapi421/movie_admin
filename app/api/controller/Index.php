@@ -67,7 +67,7 @@ class Index extends Frontend
     public function search()
     {
         $keyword = $this->request->get('keyword');
-        $list = Video::where('name', 'like', "%$keyword%")->field('id,name,image,duration')->order('total_purchases')->limit(100)->select();
+        $list = Video::where('name', 'like', "%$keyword%")->field('id,name,image,duration,video_category_ids')->order('total_purchases')->limit(100)->select();
         $this->success('success', $list);
     }
     public function checkSubscribe()
@@ -424,12 +424,10 @@ class Index extends Frontend
     {
         $tradeno = $this->request->param('tradeno');
         if (empty($tradeno)) $this->error('无此订单');
-//        $order = Order::where('order_sn', $tradeno)->field('id,order_sn,ip,video_id,subscribe_type,pay_id,status')->find();
-//        if (!$order) $this->error('无此订单');
         $status = Cache::store('redis')->get("order:".$tradeno,'0');
         $data= [
             'order_sn'=>$tradeno,
-            'status' => $status,
+            'status' => (int)$status,
         ];
         $this->success('查询成功', $data);
     }
