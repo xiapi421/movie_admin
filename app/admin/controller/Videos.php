@@ -57,13 +57,6 @@ class Videos extends Backend
 
             // 字段映射
             list($title, $img, $m3u8, $duration, $category) = $fields;
-
-            // 验证分类是否存在
-//            $categoryModel = Category::where('name', $category)->find();
-//            if (!$categoryModel) {
-//                throw new \Exception("分类不存在: $category");
-//            }
-
             // 构建数据
             $videoData = [
                 'name' => $title,
@@ -101,7 +94,7 @@ class Videos extends Backend
             $num = $page + 1;
             file_put_contents("$save_root_path/hot_{$num}.json", json_encode($videos, JSON_UNESCAPED_UNICODE));
         }
-
+        //未开启热门数据
         $hot_videos = $this->model
             ->order('total_purchases', 'desc')
             ->field('id,name,image,duration,video_category_ids')
@@ -109,7 +102,6 @@ class Videos extends Backend
             ->select();
         // 生成首页视频
         file_put_contents($save_root_path . '/hot.json', json_encode($hot_videos, JSON_UNESCAPED_UNICODE));
-
 
         // 处理其它分类
         $categories = Category::where('status', 1)->field('id,name')->order('weigh desc')->select();

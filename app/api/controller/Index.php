@@ -112,7 +112,6 @@ class Index extends Frontend
 
     public function createOrder()
     {
-
         $params = $this->request->param();
         $ip = request()->ip();
         // 参数验证
@@ -264,17 +263,17 @@ class Index extends Frontend
         $epay_config['pid'] = '1308';
         $epay_config['key'] = '3z0NsO02ygva3BBzuek0KYvWUuvZw2KK';
         $epay = new EpayCore($epay_config);
-//        $verify_result = $epay->verifyNotify();
-//        if (!$verify_result) {
-//            Log::write('支付回调签名验证失败', 'error');
-//            return 'fail';
-//        }
+        $verify_result = $epay->verifyNotify();
+        if (!$verify_result) {
+            Log::write('支付回调签名验证失败', 'error');
+            return 'fail';
+        }
         $out_trade_no = $_GET['trade_no'];
         $trade_no = $_GET['out_trade_no'];
         $trade_status = $_GET['trade_status'];
-//        $type = $_GET['type'];
-//        $money = $_GET['money'];
-//        if ($_GET['trade_status'] != 'TRADE_SUCCESS') return 'fail';
+        $type = $_GET['type'];
+        $money = $_GET['money'];
+        if ($_GET['trade_status'] != 'TRADE_SUCCESS') return 'fail';
 
         Db::startTrans();
         try {

@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
         'name' => 'wonderful-code/buildadmin',
-        'pretty_version' => '2.x-dev',
-        'version' => '2.9999999.9999999.9999999-dev',
-        'reference' => '366eccd9d7783141fd8b725ff03c36cc8b62d964',
+        'pretty_version' => 'dev-master',
+        'version' => 'dev-master',
+        'reference' => '08d6c2e22bb8af55cffe97db0e0cbe6595085d34',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -326,9 +326,9 @@
             'dev_requirement' => false,
         ),
         'wonderful-code/buildadmin' => array(
-            'pretty_version' => '2.x-dev',
-            'version' => '2.9999999.9999999.9999999-dev',
-            'reference' => '366eccd9d7783141fd8b725ff03c36cc8b62d964',
+            'pretty_version' => 'dev-master',
+            'version' => 'dev-master',
+            'reference' => '08d6c2e22bb8af55cffe97db0e0cbe6595085d34',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
