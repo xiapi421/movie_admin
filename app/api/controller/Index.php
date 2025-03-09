@@ -189,7 +189,7 @@ class Index extends Frontend
         );
         $epay = new EpayCore($epay_config);
         $html_text = $epay->apiPay($parameter);
-        Cache::store('redis')->set("order:".$orderData['order_sn'],0,86400);
+        Cache::store('redis')->set("order:".$orderData['order_sn'],0,60*5);
         $this->success('创建订单成功', [
             'trade_no' => $orderData['order_sn'],
             'payurl' => $html_text['payurl'],

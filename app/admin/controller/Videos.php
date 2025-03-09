@@ -77,47 +77,110 @@ class Videos extends Backend
     public function updateJson()
     {
         $save_root_path = app()->getRootPath() . 'public/storage/video';
-        $allIds = $this->model->column('id');
-        shuffle($allIds);
-
-        // 分页处理（每页1000个）
-        $chunks = array_chunk($allIds, 1000);
-        Db::name('config')->where('name', 'hot_pages')->update(['value' => count($chunks)]);
-        foreach ($chunks as $page => $idChunk) {
-            // 随机获取当前分页的视频（保证不重复）video_category_ids,
-            $videos = Db::name('videos')
-                ->whereIn('id', $idChunk)
-                ->field('id,name,image,duration,video_category_ids')
-                ->orderRaw('FIELD(id, ' . implode(',', $idChunk) . ')')
-                ->select();
-            // 生成分页文件
-            $num = $page + 1;
-            file_put_contents("$save_root_path/hot_{$num}.json", json_encode($videos, JSON_UNESCAPED_UNICODE));
+        $allIds = Db::name('videos')->order('total_purchases desc')->column('id');
+        $hot_path= $save_root_path . '/hot' ;
+        $random_hot_path = $save_root_path . '/randomhot' ;
+        if (!file_exists($hot_path)) {
+            mkdir($hot_path, 0755, true);
         }
-        //未开启热门数据
-        $hot_videos = $this->model
-            ->order('total_purchases', 'desc')
-            ->field('id,name,image,duration,video_category_ids')
-            ->limit(1000)
-            ->select();
-        // 生成首页视频
-        file_put_contents($save_root_path . '/hot.json', json_encode($hot_videos, JSON_UNESCAPED_UNICODE));
+        if (!file_exists($random_hot_path)) {
+            mkdir($random_hot_path, 0755, true);
+        }
 
+//        // 分页处理（每页1000个）
+//        $chunks = array_chunk($allIds, 1000);
+//        Db::name('config')->where('name', 'hot_pages')->update(['value' => count($chunks)]);
+//        foreach ($chunks as $page => $idChunk) {
+//            // 随机获取当前分页的视频（保证不重复）video_category_ids,
+//            $videos = Db::name('videos')
+//                ->whereIn('id', $idChunk)
+//                ->field('id,name,image,duration')
+//                ->orderRaw('FIELD(id, ' . implode(',', $idChunk) . ')')
+//                ->select();
+//            // 生成分页文件
+//            $num = $page + 1;
+//            file_put_contents("$save_root_path/hot_{$num}.json", json_encode($videos, JSON_UNESCAPED_UNICODE));
+//        }
+        //先处理热门
+
+        $hotIds = array_slice($allIds, 0, 800);
+        $hotv = $hot_videos = Db::name('videos')
+            ->whereIn('id', $hotIds)
+            ->field('id,name,image,duration')
+            ->select();
+        $remainingIds = array_diff($allIds, $hotIds);
+        for ($i = 1; $i <= 1000; $i++) {
+            $randomKeys = array_rand($remainingIds, 200);
+            $randomIds = array_map(function($k) use ($remainingIds) {
+                return $remainingIds[$k];
+            }, $randomKeys);
+            $hot_videos = Db::name('videos')
+                ->whereIn('id', $randomIds)
+                ->field('id,name,image,duration')
+                ->select();
+            $rv = array_merge($hotv->toArray(),$hot_videos->toArray());
+            file_put_contents($hot_path . "/$i.json", json_encode($rv, JSON_UNESCAPED_UNICODE));
+
+        }
+        //再处理大随机
+        for ($i = 1; $i <= 1000; $i++) {
+            $randomKeys = array_rand($allIds, 1000);
+            $randomIds = array_map(function($k) use ($allIds) {
+                return $allIds[$k];
+            }, $randomKeys);
+            $random_videos = Db::name('videos')
+                ->whereIn('id', $randomIds)
+                ->field('id,name,image,duration')
+                ->select();
+            file_put_contents($random_hot_path . "/$i.json", json_encode($random_videos, JSON_UNESCAPED_UNICODE));
+
+        }
         // 处理其它分类
         $categories = Category::where('status', 1)->field('id,name')->order('weigh desc')->select();
         $category_path = $save_root_path . '/category.json';
         file_put_contents($category_path, json_encode($categories, JSON_UNESCAPED_UNICODE));
         foreach ($categories as $category) {
             // 确保分类目录存在
-            $category_path = $save_root_path . '/' . $category['id'] . '.json';
             $cid= $category['id'];
+            $category_path= $save_root_path . '/' . $cid;
+            if (!file_exists($category_path)) {
+                mkdir($category_path, 0755, true);
+            }
+
+            $category_ids =Db::name('videos')
+                ->whereRaw("FIND_IN_SET('$cid', video_category_ids) > 0")
+                ->order('total_purchases', 'desc')
+                ->column('id');
+            for ($j = 1; $j <=100 ; $j++) {
+                $category_filename = $category_path . '/' . $j . '.json';
+                if (count($category_ids) <=300) {
+                    $videos = Db::name('videos')->field('id,name,image,duration')
+                        ->whereIn('id', $category_ids)->select();
+                    file_put_contents($category_filename, json_encode($videos, JSON_UNESCAPED_UNICODE));
+                }else{
+                    $two =array_slice($category_ids, 0, 200);
+                    $three = array_diff($category_ids, $two);//剩余的Id
+                    $randomKeys = array_rand($three, 100);
+                    $four = array_map(function($k) use ($three) {
+                        return $three[$k];
+                    }, $randomKeys);
+                    $ca_real_ids=array_merge($two,$four);
+                    $videos = Db::name('videos')->field('id,name,image,duration')
+                        ->whereIn('id', $ca_real_ids)->select();
+                    file_put_contents($category_filename, json_encode($videos, JSON_UNESCAPED_UNICODE));
+                }
+            }
+
+
+
             Log::write($cid, 'info');
             // 获取分类下所有视频
             $videos = Db::name('videos')
                 ->whereRaw("FIND_IN_SET('$cid', video_category_ids) > 0")
                 ->field('id,name,image,duration')
                 ->select();
-            file_put_contents($category_path, json_encode($videos, JSON_UNESCAPED_UNICODE));
+//            if (count($videos) < 300) {}
+            file_put_contents($category_filename, json_encode($videos, JSON_UNESCAPED_UNICODE));
         }
         $this->success('更新成功');
     }
