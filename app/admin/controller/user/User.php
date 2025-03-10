@@ -123,10 +123,15 @@ class User extends Backend
                         $validate->check($data);
                     }
                 }
-                $salt   = Random::build('alnum', 16);
-                $data['password'] = encrypt_password($data['password'], $salt);
-                $data['salt']     = $salt;
-//                $data['password']= encrypt_password($row['password'], $row['salt']);
+
+                if ($row['password']==$data['password']) {
+                    unset($data['password']);
+                    unset($data['salt']);
+                }else{
+                    $salt   = Random::build('alnum', 16);
+                    $data['password'] = encrypt_password($data['password'], $salt);
+                    $data['salt']     = $salt;
+                }
                 $result = $row->save($data);
                 $this->model->commit();
             } catch (Throwable $e) {
