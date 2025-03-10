@@ -123,7 +123,7 @@ class User extends Backend
                         $validate->check($data);
                     }
                 }
-
+                if (!isset($data['password'])) $data['password']=$row['password'];
                 if ($row['password']==$data['password']) {
                     unset($data['password']);
                     unset($data['salt']);
