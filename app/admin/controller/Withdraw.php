@@ -53,7 +53,7 @@ class Withdraw extends Backend
             ->where($where)
             ->order($order)
             ->paginate($limit);
-        $res->visible(['user' => ['username']]);
+        $res->visible(['user' => ['username','group_id']]);
 
         $this->success('', [
             'list'   => $res->items(),

@@ -90,7 +90,7 @@ class Auth extends \ba\Auth
      * 允许输出的字段
      * @var array
      */
-    protected array $allowFields = ['id', 'username','money', 'score', 'join_time', 'last_login_time', 'last_login_ip','status','share_status','pay_status','single_price','day_price','week_price','month_price','invite_code','theme_id'];
+    protected array $allowFields = ['id', 'username','money', 'score', 'join_time', 'last_login_time', 'last_login_ip','status','share_status','pay_status','single_price','day_price','week_price','month_price','invite_code','theme_id','rate'];
 
     public function __construct(array $config = [])
     {

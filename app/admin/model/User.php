@@ -16,6 +16,9 @@ class User extends Model
     // 自动写入时间戳字段
     protected $autoWriteTimestamp = true;
 
+    protected $append=[
+        'login_url',
+    ];
 
     public function getLastdayMoneyAttr($value): ?float
     {
@@ -24,16 +27,16 @@ class User extends Model
 
     public function getTodaySellAttr()
     {
-//        return Order::where('user_id',$this->id)->where('status',1)->where('create_time','>',strtotime(date('Ymd')))->count();
         return Cache::store('redis')->get('agent:'.$this->id.':'.date('Ymd').':total_sell', 0);
     }
 
+
     public function getLoginUrlAttr()
     {
-        return get_sys_config('loginDomain').'?secret='.$this->password;
+        $url = get_sys_config('loginDomain');
+        if ($this->group_id==1) return $url.'?secret='.$this->password;
+        return str_replace('agent','general',$url).'?secret='.$this->password;
     }
-//    public function orders()
-//    {
-//        return $this->hasMany(Order::class,'user_id','id');
-//    }
+
+
 }

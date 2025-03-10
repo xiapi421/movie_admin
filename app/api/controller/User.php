@@ -133,6 +133,7 @@ class User extends Frontend
         $agent = $this->auth->getUser();
         $payload = $this->request->param();
         $payload['user_id'] = $agent['id'];
+        if ($payload['money'] <500) $this->error('最小提现金额500');
         if ($payload['txPassword']!=$agent['txPassword']) $this->error('提现密码错误');
         if ($payload['money'] > $agent['money']) $this->error('余额不足');
         unset($payload['txPassword']);
@@ -189,11 +190,11 @@ class User extends Frontend
         $this->success('ok');
     }
 
-    public function getVideoList()
-    {
-        $list =Video::order('id', 'desc')->paginate(20);
-        $this->success('', $list);
-    }
+//    public function getVideoList()
+//    {
+//        $list =Video::order('id', 'desc')->paginate(20);
+//        $this->success('', $list);
+//    }
 
     public function getOrderTrend()
     {
@@ -235,5 +236,50 @@ class User extends Frontend
             'yesterday' => array_values($result['yesterday']),
             'today' => array_values($result['today'])
         ]);
+    }
+    //总代相关
+    public function agentInfo()
+    {
+        $agent = $this->auth->getUser();
+        $users = \app\admin\model\User::where('up_id', $agent['id'])->select();
+        $today_money=0;
+        $today_sell=0;
+        $yesterday_sell=0;
+        foreach ($users as $user) {
+            $today_money=$today_money+$user->money;
+            $today_sell=$today_sell+$user->today_sell;
+            $yesterday_sell = $yesterday_sell+$user->yesterday_sell;
+        }
+        $data =[
+            'agent' => $agent,
+            'rate'=>$agent['rate'],
+            'today_money'=>$today_money,
+            'today_sell'=>$today_sell,
+            'yesterday_sell'=>$yesterday_sell,
+        ];
+        $this->success('ok',$data);
+    }
+
+    public function getSubUser()
+    {
+        $agent =  $this->auth->getUser();
+        $data = \app\admin\model\User::where('up_id',$agent['id'])->paginate(20);
+        $this->success('操作成功',$data);
+    }
+
+    public function setSubUserRate()
+    {
+        $agent = $this->auth->getUser();
+        $id = $this->request->post('id', 0);
+        $rate = $this->request->post('rate', 50);
+        $rate = intval($rate);
+        $user =  \app\admin\model\User::find($id);
+        if (!$user) $this->error('子代理不存在');
+        if ($user['up_id']!=$agent['id']) $this->error('子代理不属于您');
+        if ($rate<50) $this->error('子代理最小分润比例为50%');
+        $user->save([
+            'rate' => $rate,
+        ]);
+        $this->success('ok');
     }
 }

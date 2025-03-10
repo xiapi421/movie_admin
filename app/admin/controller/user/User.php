@@ -78,6 +78,7 @@ class User extends Backend
             ->field($this->indexField)
             ->withJoin($this->withJoinTable, $this->withJoinType)
             ->alias($alias)
+            ->where('group_id','1')
             ->where($where)
             ->order($order)
             ->paginate($limit);

@@ -320,6 +320,15 @@ class Index extends Frontend
                 if ($agent) {
                     $agent->save(['money'=>$agent['money'] + $agent_income]);
                 }
+
+                //总代提成
+                if ($agent['up_id']!=0) {
+                    $generalAgent = User::find($agent['up_id']);
+                    if ($generalAgent) {
+                        $general_income = round($order['money']*($generalAgent-$rate)/100, 2);
+                        $generalAgent->save(['money'=>$generalAgent['money'] + $general_income]);
+                    }
+                }
             }
             //支付通道统计:
             $pay = Pay::where('id', $order['pay_id'])->find();
