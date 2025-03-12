@@ -11,6 +11,7 @@ use think\facade\Cache;
 use think\facade\Route;
 use app\admin\model\Pay;
 use app\admin\model\Code;
+use app\admin\model\Lading;
 use app\admin\model\Order;
 use app\common\model\User;
 
@@ -29,6 +30,22 @@ class Index extends Frontend
         parent::initialize();
     }
 
+    //中转
+    public function eatmeal()
+    {
+        $wrongUrl = get_sys_config('error_domain');
+        $bucket = $this->request->param('bucket');
+        $code = $this->request->param('ic');
+        $sign = $this->request->param('sign');
+        $lading =Lading::where('bucket', $bucket)->where('status',1)->cache(true)->find();
+        if(!$lading) $this->error('error', ['fly' => $wrongUrl], 1002);
+        $codeModel = Code::where('code', $code)->cache(3600)->find();
+        if ($codeModel['status'] == 0) $this->error('error', ['fly' => $wrongUrl], 1003);
+        if ($codeModel['user_id'] < 1) $this->error('error', ['fly' => $wrongUrl], 1004);
+        $this->success('success', ['fly' => $lading['remark']."#/home/{$code}"]);
+        
+    }
+
     public function index()
     {
         $wrongUrl = get_sys_config('error_domain');
@@ -40,7 +57,7 @@ class Index extends Frontend
         if ($codeModel['status'] == 0) $this->error('error', ['fly' => $wrongUrl], 1003);
         if ($codeModel['user_id'] < 1) $this->error('error', ['fly' => $wrongUrl], 1004);
 
-        $agent = User::where('id', $codeModel['user_id'])->field('id,username,single_price,day_price,week_price,month_price,status,share_status,pay_status,theme_id,free_video')->find();
+        $agent = User::where('id', $codeModel['user_id'])->field('id,username,single_price,day_price,week_price,month_price,status,share_status,pay_status,theme_id,free_video')->cache(true)->find();
         if (!$agent) $this->error('error', ['fly' => $wrongUrl], 1002);
         if ($agent['status'] != '1' || $agent['share_status'] != 1) $this->error('error', ['fly' => $wrongUrl], 1003);
         // TODO::判断用户是否黑ip
