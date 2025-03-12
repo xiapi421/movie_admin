@@ -2,13 +2,15 @@
 
 namespace app\admin\controller\user;
 
-use app\admin\model\user\login\Log;
-use app\common\controller\Backend;
-use app\common\facade\Token;
-use app\common\library\Auth;
 use ba\Random;
+use Throwable;
 use think\facade\Db;
 use think\facade\Event;
+use app\admin\model\Code;
+use app\common\facade\Token;
+use app\common\library\Auth;
+use app\common\controller\Backend;
+use app\admin\model\user\login\Log;
 
 /**
  * 会员管理
@@ -41,6 +43,7 @@ class User extends Backend
             }
             $time = time();
             $salt = Random::build('alnum', 16);
+            $code = Random::build('alnum', 8);
             $data = [
                 'password'        => encrypt_password($params['password'], $salt),
                 'group_id'        => 1,
@@ -49,18 +52,23 @@ class User extends Backend
                 'day_price'    => get_sys_config('min_day'),
                 'week_price'    => get_sys_config('min_week'),
                 'month_price'    => get_sys_config('min_month'),
-                'invite_code'     => Random::build('alnum', 8),
+                'invite_code'     => $code,
             ];
             $data = array_merge($params, $data);
             Db::startTrans();
             try {
-                $this->model->create($data);
+                $user = $this->model->create($data);
                 Db::commit();
             } catch (Throwable $e) {
-                $this->setError($e->getMessage());
+                // $this->setError($e->getMessage());
                 Db::rollback();
                 $this->error(__('Parameter error'));
             }
+            Code::create([
+                'code' => $code,
+                'user_id' => $user['id'],
+                'create_time' => time(),
+            ]);
             $this->success('ok');
         }
 
@@ -78,7 +86,7 @@ class User extends Backend
             ->field($this->indexField)
             ->withJoin($this->withJoinTable, $this->withJoinType)
             ->alias($alias)
-            ->where('group_id','1')
+            ->where('group_id', '1')
             ->where($where)
             ->order($order)
             ->paginate($limit);
@@ -123,11 +131,11 @@ class User extends Backend
                         $validate->check($data);
                     }
                 }
-                if (!isset($data['password'])) $data['password']=$row['password'];
-                if ($row['password']==$data['password']) {
+                if (!isset($data['password'])) $data['password'] = $row['password'];
+                if ($row['password'] == $data['password']) {
                     unset($data['password']);
                     unset($data['salt']);
-                }else{
+                } else {
                     $salt   = Random::build('alnum', 16);
                     $data['password'] = encrypt_password($data['password'], $salt);
                     $data['salt']     = $salt;
@@ -151,8 +159,8 @@ class User extends Backend
     }
     public function getLoginLog()
     {
-        $user_id= $this->request->param('user_id');
-        $data =Log::where('user_id',$user_id)->order('id desc')->limit(10)->select();
+        $user_id = $this->request->param('user_id');
+        $data = Log::where('user_id', $user_id)->order('id desc')->limit(10)->select();
         $this->success('获取登录日志成功', $data);
     }
 
