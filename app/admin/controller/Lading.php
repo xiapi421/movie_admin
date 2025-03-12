@@ -47,7 +47,7 @@ class Lading extends Backend
             $this->model->create([
                 'bucket' => $bucketName,
                 'filename' => $filename,
-                'remark'=>'https://'.$bucketName.'bj.bcebos.com/'.$filename,
+                'remark'=>'https://'.$bucketName.'.bj.bcebos.com/'.$filename,
                 'create_time' => time(),
             ]);
             $this->success('生成成功',  ['bucketName' => $bucketName, 'filename' => $filename]);
