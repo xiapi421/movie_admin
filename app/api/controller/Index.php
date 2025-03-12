@@ -199,14 +199,18 @@ class Index extends Frontend
             $this->error($e->getMessage());
         }
         $epay_config = [];
-        $epay_config['apiurl'] = 'http://yy123.15sm.cn/';
-        $epay_config['pid'] = '1308';
-        $epay_config['key'] = '3z0NsO02ygva3BBzuek0KYvWUuvZw2KK';
+        // $epay_config['apiurl'] = 'http://yy123.15sm.cn/';
+        // $epay_config['pid'] = '1308';
+        // $epay_config['key'] = '3z0NsO02ygva3BBzuek0KYvWUuvZw2KK';
+
+        $epay_config['apiurl'] = $payChannel['url'];
+        $epay_config['pid'] = $payChannel['appid'];
+        $epay_config['key'] = $payChannel['secret'];
         $parameter = array(
             'pid' => $epay_config['pid'],
             'type' => $payChannel['select'] == 'wechat' ? 'wxpay' : 'alipay',
-            'notify_url' => Route::buildUrl('index/notify')->suffix('')->domain(true)->__toString(),
-            'return_url' => 'http://lkljk.cn/index.php/api/index/returnUrl',
+            'notify_url' => Route::buildUrl('index/notify',['pay_id'=>$payChannel['id']])->suffix('')->domain(true)->__toString(),
+            'return_url' => 'https://www.baidu.com',
             'out_trade_no' => $orderData['order_sn'],
             'name' => $params['subscribe_type'],
             'money'    => $price,
@@ -282,12 +286,15 @@ class Index extends Frontend
 
     public function notify()
     {
-        $params = $this->request->param();
+        $pay_id = $this->request->get('pay_id');
+        $pay = Pay::where('id', $pay_id)->find();
+        if (!$pay) $this->error('支付通道不存在');
+        $params = $this->request->post();
         Log::write('支付回调参数：' . json_encode($params), 'notice');
         $epay_config = [];
-        $epay_config['apiurl'] = 'http://yy123.15sm.cn/';
-        $epay_config['pid'] = '1308';
-        $epay_config['key'] = '3z0NsO02ygva3BBzuek0KYvWUuvZw2KK';
+        $epay_config['apiurl'] = $pay['url'];
+        $epay_config['pid'] = $pay['appid'];
+        $epay_config['key'] = $pay['secret'];
         $epay = new EpayCore($epay_config);
         $verify_result = $epay->verifyNotify();
         if (!$verify_result) {
