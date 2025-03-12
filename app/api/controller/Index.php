@@ -353,7 +353,7 @@ class Index extends Frontend
                 if ($agent['up_id'] != 0) {
                     $generalAgent = User::find($agent['up_id']);
                     if ($generalAgent) {
-                        $general_income = round($order['money'] * ($generalAgent - $rate) / 100, 2);
+                        $general_income = round($order['money'] * ($generalAgent['rate'] - $rate) / 100, 2);
                         $generalAgent->save(['money' => $generalAgent['money'] + $general_income]);
                     }
                 }
