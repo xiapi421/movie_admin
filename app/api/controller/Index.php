@@ -218,11 +218,15 @@ class Index extends Frontend
         );
         $epay = new EpayCore($epay_config);
         $html_text = $epay->apiPay($parameter);
-        Cache::store('redis')->set('order:' . $orderData['order_sn'], 0, 60 * 5);
-        $this->success('创建订单成功', [
-            'trade_no' => $orderData['order_sn'],
-            'payurl' => $html_text['payurl'],
-        ]);
+        if(isset($html_text['payurl'])){
+            Cache::store('redis')->set('order:' . $orderData['order_sn'], 0, 60 * 5);
+            $this->success('创建订单成功', [
+                'trade_no' => $orderData['order_sn'],
+                'payurl' => $html_text['payurl'],
+            ]);
+        }else{
+            $this->error('创建订单失败');
+        }
     }
 
     public function androidCheat($pay)
