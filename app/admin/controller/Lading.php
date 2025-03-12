@@ -41,7 +41,7 @@ class Lading extends Backend
         if($result['code']!=200) $this->error('生成失败');
         $result= $bce->setBucketAcl($bucketName, 'public-read');
         if($result['code']!=200) $this->error('生成失败');
-        $result = $bce->uploadFile($bucketName, $filename, root_path() . 'public/qernv.html');
+        $result = $bce->uploadFile($bucketName, $filename, root_path() . 'public/front.html');
         if($result['code']!=200) $this->error('生成失败');
         if($result['code'] == 200){
             $this->model->create([
