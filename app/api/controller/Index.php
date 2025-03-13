@@ -293,7 +293,7 @@ class Index extends Frontend
         $pay_id = $this->request->get('pay_id');
         $pay = Pay::where('id', $pay_id)->find();
         if (!$pay) $this->error('支付通道不存在');
-        $params = $this->request->post();
+        $params = $this->request->param();
         Log::write('支付回调参数：' . json_encode($params), 'notice');
         $epay_config = [];
         $epay_config['apiurl'] = $pay['url'];
