@@ -49,8 +49,12 @@ class Index extends Frontend
     public function index()
     {
         $wrongUrl = get_sys_config('error_domain');
-        $ip = $this->request->ip();
+        $ip = $this->request->header('REMOTE-ADDR');
         Log::info('访问的ip:'.$ip);
+        $header = $this->request->header();
+        Log::info('访问的header:'.json_encode($header));
+        $server = $this->request->server();
+        Log::info('访问的server:'.json_encode($server));
         $code = $this->request->param('ic', '0');
         if (empty($code)) $this->error('error', ['fly' => $wrongUrl], 1001);
         $codeModel = Code::where('code', $code)->cache(3600)->find();
@@ -87,7 +91,7 @@ class Index extends Frontend
 
     public function getPaidVideos()
     {
-        $ip = $this->request->ip();
+        $ip = $this->request->header('REMOTE-ADDR');
         $paidVideo = Cache::store('redis')->get('single:' . $ip);
         $data = Video::where('id', 'in', $paidVideo)->select()->toArray();
         $this->success('ok', $data);
@@ -103,7 +107,7 @@ class Index extends Frontend
     public function checkSubscribe()
     {
         $vid = $this->request->param('vid');
-        $ip = $this->request->ip();
+        $ip = $this->request->header('REMOTE-ADDR');
         $paidVideos = Cache::store('redis')->get('single:' . $ip);
         $isVip = Cache::store('redis')->get('term:' . $ip, 0);
         if ($isVip != 0 || in_array($vid, $paidVideos)) {
@@ -140,7 +144,8 @@ class Index extends Frontend
     public function createOrder()
     {
         $params = $this->request->param();
-        $ip = request()->ip();
+        $ip = $this->request->header('REMOTE-ADDR');
+        Log::info('访问的ip:'.$ip);
         // 参数验证
         $validate = validate([
             'user_id' => 'require|number|gt:0',
@@ -219,6 +224,7 @@ class Index extends Frontend
         );
         $epay = new EpayCore($epay_config);
         $html_text = $epay->apiPay($parameter);
+        Log::info('创建订单返回结果:'.json_encode($html_text));
         if(isset($html_text['payurl'])){
             Cache::store('redis')->set('order:' . $orderData['order_sn'], 0, 60 * 5);
             $this->success('创建订单成功', [
