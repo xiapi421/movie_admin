@@ -159,10 +159,15 @@ class User extends Frontend
     {
         $data = $this->request->post();
         $agent = $this->auth->getUser();
+        $min_single = get_sys_config('min_single');
+        $min_day = get_sys_config('min_day');
+        if($data['single_price']<$min_single) $this->error('单片最低价格不能低于'.$min_single);
+        if($data['day_price']<$min_day) $this->error('单日最低价格不能低于'.$min_day);
         $agent['single_price'] = $data['single_price'];
         $agent['day_price'] = $data['day_price'];
-        $agent['week_price'] = $data['week_price'];
-        $agent['month_price'] = $data['month_price'];
+        
+        // $agent['week_price'] = $data['week_price'];
+        // $agent['month_price'] = $data['month_price'];
         $agent->save();
         $this->success('保存成功');
     }
@@ -177,14 +182,14 @@ class User extends Frontend
     public function setThemeSetting()
     {
         $agent = $this->auth->getUser();
-        $id = $this->request->post('theme_id', 0);
+        $id = $this->request->post('theme_id', 1);
         $agent->save(['theme_id' => $id]);
         $this->success('ok');
     }
 
     public function saveFreeVideo()
     {
-        $video_id = $this->request->post('video_id', 0);
+        $video_id = $this->request->post('video_id', '0');
         $agent = $this->auth->getUser();
         $agent->save(['free_video' => $video_id]);
         $this->success('ok');
