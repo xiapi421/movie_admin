@@ -291,9 +291,10 @@ class Index extends Frontend
     public function notify()
     {
         $pay_id = $this->request->get('pay_id');
-        $pay = Pay::where('id', $pay_id)->find();
+        $pay = Pay::where('id', $pay_id)->cache(true)->find();
         if (!$pay) $this->error('支付通道不存在');
         $params = $this->request->param();
+        unset($_GET['pay_id']);
         Log::write('支付回调参数：' . json_encode($params), 'notice');
         $epay_config = [];
         $epay_config['apiurl'] = $pay['url'];
