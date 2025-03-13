@@ -50,7 +50,7 @@ class Index extends Frontend
     {
         $wrongUrl = get_sys_config('error_domain');
         $ip = $this->request->header('REMOTE-ADDR');
-        // Log::info('访问的ip:'.$ip);
+        Log::info('访问的ip:'.$ip);
         // $header = $this->request->header();
         // Log::info('访问的header:'.json_encode($header));
         // $server = $this->request->server();
@@ -145,7 +145,7 @@ class Index extends Frontend
     {
         $params = $this->request->param();
         $ip = $this->request->header('REMOTE-ADDR');
-        Log::info('访问的ip:'.$ip);
+        // Log::info('访问的ip:'.$ip);
         // 参数验证
         $validate = validate([
             'user_id' => 'require|number|gt:0',
@@ -325,7 +325,7 @@ class Index extends Frontend
             // 查询订单
             $order = Db::name('order')->where('order_sn', $trade_no)->find();
             if (!$order) {
-                Log::write('订单不存在：' . $params['order_sn'], 'error');
+                // Log::write('订单不存在：' . $params['order_sn'], 'error');
                 return 'fail';
             }
 
@@ -513,14 +513,13 @@ class Index extends Frontend
 
     public function generateBucket()
     {
-        Log::clear();
         $randomStr = 'cs-v10';
         $bce = new Bce([
             'accessKeyId' => 'ALTAKRRYcicQtl9pkL5ys4kJtm',
             'secretAccessKey' => '755757f6d135472e8dd24f5addc9b03b',
         ]);
         $result = $bce->createBucket($randomStr);
-        dump($result);
+        //dump($result);
         // $result = $bce->setBucketAcl($randomStr, 'public-read');
         // dump($result['data']);
 
