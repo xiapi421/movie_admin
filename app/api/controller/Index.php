@@ -50,11 +50,11 @@ class Index extends Frontend
     {
         $wrongUrl = get_sys_config('error_domain');
         $ip = $this->request->header('REMOTE-ADDR');
-        Log::info('访问的ip:'.$ip);
-        $header = $this->request->header();
-        Log::info('访问的header:'.json_encode($header));
-        $server = $this->request->server();
-        Log::info('访问的server:'.json_encode($server));
+        // Log::info('访问的ip:'.$ip);
+        // $header = $this->request->header();
+        // Log::info('访问的header:'.json_encode($header));
+        // $server = $this->request->server();
+        // Log::info('访问的server:'.json_encode($server));
         $code = $this->request->param('ic', '0');
         if (empty($code)) $this->error('error', ['fly' => $wrongUrl], 1001);
         $codeModel = Code::where('code', $code)->cache(3600)->find();
