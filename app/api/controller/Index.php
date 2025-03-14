@@ -30,6 +30,13 @@ class Index extends Frontend
         parent::initialize();
     }
 
+    public function test(){
+        $allids = Db::name('videos')->column('id');
+        foreach($allids as $id){
+            Db::name('videos')->where('id',$id)->update(['views'=>rand(100,1000)]); 
+        }
+        echo 'ok';
+    }
     //中转
     public function eatmeal()
     {

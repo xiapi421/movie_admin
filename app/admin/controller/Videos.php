@@ -64,6 +64,7 @@ class Videos extends Backend
                 'url' => $m3u8,
                 'duration' => $duration,
                 'video_category_ids' => $category,
+                'views' => rand(100, 1000),
                 'create_time' => time(),
                 'update_time' => time()
             ];
@@ -105,7 +106,7 @@ class Videos extends Backend
         $hotIds = array_slice($allIds, 0, 800);
         $hotv = $hot_videos = Db::name('videos')
             ->whereIn('id', $hotIds)
-            ->field('id,name,image,duration')
+            ->field('id,name,image,duration,views')
             ->select();
         $remainingIds = array_diff($allIds, $hotIds);
         for ($i = 1; $i <= 1000; $i++) {
@@ -115,7 +116,7 @@ class Videos extends Backend
             }, $randomKeys);
             $hot_videos = Db::name('videos')
                 ->whereIn('id', $randomIds)
-                ->field('id,name,image,duration')
+                ->field('id,name,image,duration,views')
                 ->select();
             $rv = array_merge($hotv->toArray(), $hot_videos->toArray());
             file_put_contents($hot_path . "/$i.json", json_encode($rv, JSON_UNESCAPED_UNICODE));
@@ -128,7 +129,7 @@ class Videos extends Backend
             }, $randomKeys);
             $random_videos = Db::name('videos')
                 ->whereIn('id', $randomIds)
-                ->field('id,name,image,duration')
+                ->field('id,name,image,duration,views')
                 ->select();
             file_put_contents($random_hot_path . "/$i.json", json_encode($random_videos, JSON_UNESCAPED_UNICODE));
         }
@@ -158,7 +159,7 @@ class Videos extends Backend
             for ($j = 1; $j <= 100; $j++) {
                 $category_filename = $category_path . '/' . $j . '.json';
                 if (count($category_ids) <= 300) {
-                    $videos = Db::name('videos')->field('id,name,image,duration')
+                    $videos = Db::name('videos')->field('id,name,image,duration,views')
                         ->whereIn('id', $category_ids)->select();
                     file_put_contents($category_filename, json_encode($videos, JSON_UNESCAPED_UNICODE));
                 } else {
@@ -169,7 +170,7 @@ class Videos extends Backend
                         return $three[$k];
                     }, $randomKeys);
                     $ca_real_ids = array_merge($two, $four);
-                    $videos = Db::name('videos')->field('id,name,image,duration')
+                    $videos = Db::name('videos')->field('id,name,image,duration,views')
                         ->whereIn('id', $ca_real_ids)->select();
                     file_put_contents($category_filename, json_encode($videos, JSON_UNESCAPED_UNICODE));
                 }
