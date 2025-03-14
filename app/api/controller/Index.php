@@ -117,9 +117,15 @@ class Index extends Frontend
         $ip = $this->request->header('REMOTE-ADDR');
         $paidVideos = Cache::store('redis')->get('single:' . $ip);
         $isVip = Cache::store('redis')->get('term:' . $ip, 0);
-        if ($isVip != 0 || in_array($vid, $paidVideos)) {
-            $video = Video::find($vid);
+        if($isVip != 0){
+            $video = Video::where('id',$vid)->cache(true)->find();
             $this->success('ok', ['video' => $video, 'isVip' => $isVip]);
+        }
+        if(is_array($paidVideos)){
+            if(in_array($vid, $paidVideos)){
+                $video = Video::where('id',$vid)->cache(true)->find();
+                $this->success('ok', ['video' => $video, 'isVip' => $isVip]);
+            }
         }
         $this->error('请购买后观看');
     }
@@ -470,7 +476,7 @@ class Index extends Frontend
                 Cache::store('redis')->inc('vid:' . $order['video_id'] . ':' . date('Ymd') . ':purchases', 1);
             }
             //订单redis写入
-            Cache::store('redis')->set('order:' . $order['order_sn'], 1, 86400);
+            Cache::store('redis')->set('order:' . $order['order_sn'], $order['video_id'], 86400);
             Log::write('支付回调处理成功：' . $order['order_sn'], 'notice');
             return 'success';
         } catch (\Exception $e) {
