@@ -45,8 +45,7 @@ class Hello extends Command
             }else{
                 $today_conversion_rate = $today_purchases/$today_click*100;
             }
-            $video = Videos::find($i);
-            $video->save([
+            Db::name('videos')->where('id', $i)->update([
                     'total_views' => $total_view,
                     'total_clicks' => $total_click,
                     'total_purchases' => $total_purchases,
