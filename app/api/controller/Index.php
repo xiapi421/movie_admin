@@ -471,6 +471,7 @@ class Index extends Frontend
             }
             //订单redis写入
             Cache::store('redis')->set('order:' . $order['order_sn'], 1, 86400);
+            Log::write('支付回调处理成功：' . $order['order_sn'], 'notice');
             return 'success';
         } catch (\Exception $e) {
             Db::rollback();
