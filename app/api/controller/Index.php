@@ -44,9 +44,9 @@ class Index extends Frontend
         $bucket = $this->request->param('bucket');
         $code = $this->request->param('ic');
         $sign = $this->request->param('sign');
-        $lading =Lading::where('bucket', $bucket)->where('status',1)->cache(true)->find();
+        $lading =Lading::where('bucket', $bucket)->where('status',1)->cache(true,86400*2)->find();
         if(!$lading) $this->error('error', ['fly' => $wrongUrl], 1002);
-        $codeModel = Code::where('code', $code)->cache(3600)->find();
+        $codeModel = Code::where('code', $code)->cache(3600,86400*2)->find();
         if ($codeModel['status'] == 0) $this->error('error', ['fly' => $wrongUrl], 1003);
         if ($codeModel['user_id'] < 1) $this->error('error', ['fly' => $wrongUrl], 1004);
         $this->success('success', ['fly' => $lading['remark']."#/home/{$code}"]);
@@ -64,17 +64,17 @@ class Index extends Frontend
         // Log::info('访问的server:'.json_encode($server));
         $code = $this->request->param('ic', '0');
         if (empty($code)) $this->error('error', ['fly' => $wrongUrl], 1001);
-        $codeModel = Code::where('code', $code)->cache(3600)->find();
+        $codeModel = Code::where('code', $code)->cache(true,86400*2)->find();
         if (!$codeModel) $this->error('error', ['fly' => $wrongUrl], 1002);
         if ($codeModel['status'] == 0) $this->error('error', ['fly' => $wrongUrl], 1003);
         if ($codeModel['user_id'] < 1) $this->error('error', ['fly' => $wrongUrl], 1004);
 
-        $agent = User::where('id', $codeModel['user_id'])->field('id,username,single_price,day_price,week_price,month_price,status,share_status,pay_status,theme_id,free_video')->cache(true)->find();
+        $agent = User::where('id', $codeModel['user_id'])->field('id,username,single_price,day_price,week_price,month_price,status,share_status,pay_status,theme_id,free_video')->cache(true,86400*2)->find();
         if (!$agent) $this->error('error', ['fly' => $wrongUrl], 1002);
         if ($agent['status'] != '1' || $agent['share_status'] != 1) $this->error('error', ['fly' => $wrongUrl], 1003);
         // TODO::判断用户是否黑ip
         $handler = Cache::store('redis')->handler();
-        $handler->sadd('agent:' . $agent['id'] . ':' . date('Ymd') . ':ip', ip2long($ip),);
+        $handler->sadd('agent:' . $agent['id'] . ':' . date('Ymd') . ':ip', ip2long($ip),86400*2);
 
         //        $blackIp = Db::name( 'black_ip' )->where( 'ip', $ip )->find();
         //        if ( $blackIp ) $this->error( 'error', [ 'fly'=>$wrongUrl ], 1004 );
@@ -107,7 +107,7 @@ class Index extends Frontend
     public function search()
     {
         $keyword = $this->request->get('keyword');
-        $list = Db::name('videos')->where('name', 'like', "%$keyword%")->field('id,name,image,duration')->order('total_purchases')->limit(100)->select();
+        $list = Db::name('videos')->where('name', 'like', "%$keyword%")->field('id,name,image,duration,views')->order('total_purchases')->limit(100)->select();
         $this->success('success', $list);
     }
 
@@ -132,16 +132,25 @@ class Index extends Frontend
 
     public function updateVideoClicks()
     {
+
+        $today = date('Ymd');
         $id = $this->request->get('vid');
         if (Cache::store('redis')->has("vid:$id:click")) {
             Cache::store('redis')->inc("vid:$id:click", 1);
         } else {
             Cache::store('redis')->set("vid:$id:click", 1, 0);
         }
+
+        if (Cache::store('redis')->has('vid:' . $id . ':' . $today . ':click')) {
+            Cache::store('redis')->inc('vid:' . $id . ':' . $today . ':click', 1);
+        } else {
+            Cache::store('redis')->set('vid:' . $id . ':' . $today . ':click', 1,86400*2);
+        }
     }
 
     public function updateVideoViews()
     {
+        $today = date('Ymd');
         $ids = $this->request->get('vids');
         $arr = explode(',', $ids);
         foreach ($arr as $id) {
@@ -149,6 +158,12 @@ class Index extends Frontend
                 Cache::store('redis')->inc("vid:$id:view", 1);
             } else {
                 Cache::store('redis')->set("vid:$id:view", 1, 0);
+            }
+
+            if (Cache::store('redis')->has('vid:' . $id . ':' . $today . ':view')) {
+                Cache::store('redis')->inc('vid:' . $id . ':' . $today . ':view', 1);
+            } else {
+                Cache::store('redis')->set('vid:' . $id . ':' . $today . ':view', 1,86400*2);
             }
         }
         $this->success('', $ids);

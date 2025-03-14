@@ -23,10 +23,10 @@ class Hello extends Command
 
     protected function execute(Input $input, Output $output)
     {
+        $today = date('Ymd');
         // 指令输出
         $amount = Db::name('videos')->count();
         for ($i = 1; $i <= $amount; $i++) {
-            $today = date('Ymd');
             $total_view = Cache::store('redis')->get('vid:' . $i . ":view", '0');
             $total_click = Cache::store('redis')->get('vid:' . $i . ":click", '0');
             $total_purchases = Cache::store('redis')->get('vid:' . $i . ":purchases", '0');
