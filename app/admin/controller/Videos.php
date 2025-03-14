@@ -119,6 +119,7 @@ class Videos extends Backend
                 ->field('id,name,image,duration,views')
                 ->select();
             $rv = array_merge($hotv->toArray(), $hot_videos->toArray());
+            shuffle($rv);
             file_put_contents($hot_path . "/$i.json", json_encode($rv, JSON_UNESCAPED_UNICODE));
         }
         //再处理大随机

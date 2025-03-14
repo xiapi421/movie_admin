@@ -89,8 +89,8 @@ class Index extends Frontend
             'paidVideo' => Db::name('videos')->where('id', 'in', $paidVideo)->select()->toArray(),
             'isVip' => Cache::store('redis')->get('term:' . $ip, 0),
             //            'isVip'=>1,
-            'random_hot' => get_sys_config('random_hot'),
-            'hot_pages' => get_sys_config('hot_pages'),
+            'random_hot' => (int)get_sys_config('random_hot'),
+            'hot_pages' => (int)get_sys_config('hot_pages'),
             'front_name' => get_sys_config('front_name'),
         ];
         $this->success('success', $data);
