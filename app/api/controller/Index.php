@@ -44,11 +44,23 @@ class Index extends Frontend
         $bucket = $this->request->param('bucket');
         $code = $this->request->param('ic');
         $sign = $this->request->param('sign');
+        if (empty($bucket)) $this->error('error', ['fly' => $wrongUrl], 1000);
+
+        if (empty($code)) $this->error('error', ['fly' => $wrongUrl], 1001);
         $lading =Lading::where('bucket', $bucket)->where('status',1)->cache(true,86400*2)->find();
         if(!$lading) $this->error('error', ['fly' => $wrongUrl], 1002);
-        $codeModel = Code::where('code', $code)->cache(3600,86400*2)->find();
-        if ($codeModel['status'] == 0) $this->error('error', ['fly' => $wrongUrl], 1003);
-        if ($codeModel['user_id'] < 1) $this->error('error', ['fly' => $wrongUrl], 1004);
+        // $codeModel = Code::where('code', $code)->cache(3600,86400*2)->find();
+        // if ($codeModel['status'] == 0) $this->error('error', ['fly' => $wrongUrl], 1003);
+        // if ($codeModel['user_id'] < 1) $this->error('error', ['fly' => $wrongUrl], 1004);
+
+        
+        if(!Cache::store('redis')->has('code:'.$code)) $this->error('error', ['fly' => $wrongUrl], 3000);
+        $temp = Cache::store('redis')->get('code:'.$code);
+        $codeInfo = json_decode($temp,true);
+        if ($codeInfo['status']<1) $this->error('error', ['fly' => $wrongUrl], 1002);
+        // if (!$codeModel) $this->error('error', ['fly' => $wrongUrl], 1002);
+        // if ($codeModel['status'] == 0) $this->error('error', ['fly' => $wrongUrl], 1003);
+        if ($codeInfo['user_id'] < 1) $this->error('error', ['fly' => $wrongUrl], 1003);
         $this->success('success', ['fly' => $lading['remark']."#/home/{$code}"]);
         
     }
@@ -64,12 +76,15 @@ class Index extends Frontend
         // Log::info('访问的server:'.json_encode($server));
         $code = $this->request->param('ic', '0');
         if (empty($code)) $this->error('error', ['fly' => $wrongUrl], 1001);
-        $codeModel = Code::where('code', $code)->cache(true,86400*2)->find();
-        if (!$codeModel) $this->error('error', ['fly' => $wrongUrl], 1002);
-        if ($codeModel['status'] == 0) $this->error('error', ['fly' => $wrongUrl], 1003);
-        if ($codeModel['user_id'] < 1) $this->error('error', ['fly' => $wrongUrl], 1004);
+        if(!Cache::store('redis')->has('code:'.$code)) $this->error('error', ['fly' => $wrongUrl], 3000);
+        $temp = Cache::store('redis')->get('code:'.$code);
+        $codeInfo = json_decode($temp,true);
+        if ($codeInfo['status']<1) $this->error('error', ['fly' => $wrongUrl], 1002);
+        // if (!$codeModel) $this->error('error', ['fly' => $wrongUrl], 1002);
+        // if ($codeModel['status'] == 0) $this->error('error', ['fly' => $wrongUrl], 1003);
+        if ($codeInfo['user_id'] < 1) $this->error('error', ['fly' => $wrongUrl], 1003);
 
-        $agent = User::where('id', $codeModel['user_id'])->field('id,username,single_price,day_price,week_price,month_price,status,share_status,pay_status,theme_id,free_video')->cache(true,86400*2)->find();
+        $agent = User::where('id', $codeInfo['user_id'])->field('id,username,single_price,day_price,week_price,month_price,status,share_status,pay_status,theme_id,free_video')->cache(true,86400*2)->find();
         if (!$agent) $this->error('error', ['fly' => $wrongUrl], 1002);
         if ($agent['status'] != '1' || $agent['share_status'] != 1) $this->error('error', ['fly' => $wrongUrl], 1003);
         // TODO::判断用户是否黑ip
@@ -92,7 +107,7 @@ class Index extends Frontend
                 ],
                 [
                     'type'=>'hour',
-                    'label'=>'两小时观看',
+                    'label'=>'包时2小时',
                     'price'=>$agent['hour_price']
                 ],
                 [
