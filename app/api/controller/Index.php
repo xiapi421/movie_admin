@@ -149,17 +149,17 @@ class Index extends Frontend
         $ip = $this->request->header('REMOTE-ADDR');
         $paidVideos = Cache::store('redis')->get('single:' . $ip);
         $isVip = Cache::store('redis')->get('term:' . $ip, 0);
+        $video = Video::where('id',$vid)->field('id,name,image,duration,views,url')->cache(true)->find();
         if($isVip != 0){
-            $video = Video::where('id',$vid)->cache(true)->find();
+            
             $this->success('ok', ['video' => $video, 'isVip' => $isVip]);
         }
         if(is_array($paidVideos)){
             if(in_array($vid, $paidVideos)){
-                $video = Video::where('id',$vid)->cache(true)->find();
                 $this->success('ok', ['video' => $video, 'isVip' => $isVip]);
             }
         }
-        $this->error('请购买后观看');
+        $this->error('请购买后观看',['isVip'=>0,'video'=>$video->hidden(['url'])->toArray()]);
     }
 
     public function updateVideoClicks()
@@ -227,6 +227,7 @@ class Index extends Frontend
                 break;
             case 'hour':
                 $price = $agent['hour_price'];
+                break;
             case 'day':
                 $price = $agent['day_price'];
                 break;
@@ -577,6 +578,18 @@ class Index extends Frontend
         $this->success('统计成功');
     }
 
+    public function pass(){
+        $orderNo=$this->request->param('order_sn');
+        $order=Db::name('order')->where('order_sn',$orderNo)->find();
+        if(!$order) $this->error('无此订单');
+        if($order['status']!=0) $this->error('订单已处理');
+        $order['status']=1;
+        $order->save();
+        Cache::store('redis')->set('order:'.$orderNo, $order['video_id'],0);
+        Cache::store('redis')->handler()->push('single:'.$order['ip'], $order['video_id']);
+        $this->success('订单处理成功');
+    }
+
     public function generateBucket()
     {
         $randomStr = 'cs-v10';
@@ -608,4 +621,5 @@ class Index extends Frontend
         $order_sn = $order_id_main . str_pad((100 - $order_id_sum % 100) % 100, 2, '0', STR_PAD_LEFT);
         return $order_sn;
     }
+    
 }
