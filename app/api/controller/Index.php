@@ -96,7 +96,7 @@ class Index extends Frontend
         $payChannel = Db::name('pay')->where('status', 1)
             ->field('id,name,select,weigh,remark,android_status,ios_status,small_status,big_status')
             ->order('weigh desc')->select();
-        $paidVideo = Cache::store('redis')->get('single:' . $ip);
+        $paidVideo = Cache::store('redis')->handler()->lrange('single:' . $ip, 0, -1);
         $data = [
             'agent' => $agent,
             'payOption'=>[
@@ -131,7 +131,7 @@ class Index extends Frontend
     public function getPaidVideos()
     {
         $ip = $this->request->header('REMOTE-ADDR');
-        $paidVideo = Cache::store('redis')->get('single:' . $ip);
+        $paidVideo = Cache::store('redis')->handler()->lrange('single:' . $ip, 0, -1);
         $data = Video::where('id', 'in', $paidVideo)->select()->toArray();
         $this->success('ok', $data);
     }
@@ -147,7 +147,7 @@ class Index extends Frontend
     {
         $vid = $this->request->param('vid');
         $ip = $this->request->header('REMOTE-ADDR');
-        $paidVideos = Cache::store('redis')->get('single:' . $ip);
+        $paidVideos = Cache::store('redis')->handler()->lrange('single:' . $ip, 0, -1);
         $isVip = Cache::store('redis')->get('term:' . $ip, 0);
         $video = Db::name('videos')->where('id',$vid)->field('id,name,image,duration,views,url')->cache(true)->find();
         if($isVip != 0){
@@ -158,7 +158,8 @@ class Index extends Frontend
                 $this->success('ok', ['video' => $video, 'isVip' => $isVip]);
             }
         }
-        $this->error('请购买后观看',['isVip'=>0,'video'=>$video->hidden(['url'])->toArray()]);
+        unset($video['url']);
+        $this->error('请购买后观看',['video'=>$video]);
     }
 
     public function updateVideoClicks()
@@ -584,8 +585,14 @@ class Index extends Frontend
         if($order['status']!=0) $this->error('订单已处理');
         $order['status']=1;
         $order->save();
-        Cache::store('redis')->set('order:'.$orderNo, $order['video_id'],0);
-        Cache::store('redis')->handler()->push('single:'.$order['ip'], $order['video_id']);
+        Cache::store('redis')->inc('order:'.$orderNo, $order['video_id']);
+        if($order['subscribe_type']=='single'){
+            
+            Cache::store('redis')->handler()->push('single:'.$order['ip'], $order['video_id']);
+        }
+        if($order['subscribe_type']=='hour'){
+            Cache::store('redis')->tag('subscribe')->set('term:'.$order['ip'], $order['video_id'],7200);
+        }
         $this->success('订单处理成功');
     }
 
