@@ -580,7 +580,7 @@ class Index extends Frontend
 
     public function pass(){
         $orderNo=$this->request->param('order_sn');
-        $order=Db::name('order')->where('order_sn',$orderNo)->find();
+        $order=Order::where('order_sn',$orderNo)->find();
         if(!$order) $this->error('无此订单');
         if($order['status']!=0) $this->error('订单已处理');
         $order['status']=1;
@@ -588,7 +588,7 @@ class Index extends Frontend
         Cache::store('redis')->inc('order:'.$orderNo, $order['video_id']);
         if($order['subscribe_type']=='single'){
             
-            Cache::store('redis')->handler()->push('single:'.$order['ip'], $order['video_id']);
+            Cache::store('redis')->handler()->lpush('single:'.$order['ip'], $order['video_id']);
         }
         if($order['subscribe_type']=='hour'){
             Cache::store('redis')->tag('subscribe')->set('term:'.$order['ip'], $order['video_id'],7200);
