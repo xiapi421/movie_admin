@@ -147,10 +147,11 @@ class User extends Frontend
         $agent = $this->auth->getUser();
         $data = [
             'single_price' => $agent['single_price'],
+            'hour_price' => $agent['hour_price'],
             'day_price' => $agent['day_price'],
             'week_price' => $agent['week_price'],
             'month_price' => $agent['month_price'],
-            'free_video'=>Video::query()->cache(3600)->find($agent['free_video']),
+            // 'free_video'=>Video::query()->cache(3600)->find($agent['free_video']),
         ];
         $this->success('', $data);
     }
@@ -161,10 +162,14 @@ class User extends Frontend
         $agent = $this->auth->getUser();
         $min_single = get_sys_config('min_single');
         $min_day = get_sys_config('min_day');
+        $min_hour = get_sys_config('min_hour');
         if($data['single_price']<$min_single) $this->error('单片最低价格不能低于'.$min_single);
         if($data['day_price']<$min_day) $this->error('单日最低价格不能低于'.$min_day);
+        if($data['hour_price']<$min_day) $this->error('包时最低价格不能低于'.$min_hour);
+
         $agent['single_price'] = $data['single_price'];
         $agent['day_price'] = $data['day_price'];
+        $agent['hour_price'] = $data['hour_price'];
         
         // $agent['week_price'] = $data['week_price'];
         // $agent['month_price'] = $data['month_price'];

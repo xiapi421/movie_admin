@@ -195,7 +195,7 @@ class Index extends Frontend
         $validate = validate([
             'user_id' => 'require|number|gt:0',
             'video_id' => 'require|number|gt:0',
-            'subscribe_type' => 'require|in:single,day,week,month',
+            'subscribe_type' => 'require|in:single,hour,day,week,month',
             'pay_id' => 'require|number|gt:0',
         ]);
 
@@ -210,6 +210,8 @@ class Index extends Frontend
             case 'single':
                 $price = $agent['single_price'];
                 break;
+            case 'hour':
+                    $price = $agent['day_price'];
             case 'day':
                 $price = $agent['day_price'];
                 break;
@@ -486,6 +488,9 @@ class Index extends Frontend
             if ($order['subscribe_type'] == 'single') {
                 //                $video = Video::find( $order[ 'video_id' ] );
                 Cache::store('redis')->push('single:' . $order['ip'], $order['video_id']);
+            }
+            if ($order['subscribe_type'] == 'hour') {
+                Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'], $order['video_id'], 7200);
             }
             if ($order['subscribe_type'] == 'day') {
                 Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'], $order['video_id'], 86400);
