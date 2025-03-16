@@ -149,9 +149,8 @@ class Index extends Frontend
         $ip = $this->request->header('REMOTE-ADDR');
         $paidVideos = Cache::store('redis')->get('single:' . $ip);
         $isVip = Cache::store('redis')->get('term:' . $ip, 0);
-        $video = Video::where('id',$vid)->field('id,name,image,duration,views,url')->cache(true)->find();
+        $video = Db::name('videos')->where('id',$vid)->field('id,name,image,duration,views,url')->cache(true)->find();
         if($isVip != 0){
-            
             $this->success('ok', ['video' => $video, 'isVip' => $isVip]);
         }
         if(is_array($paidVideos)){
