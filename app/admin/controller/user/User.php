@@ -11,6 +11,7 @@ use app\common\facade\Token;
 use app\common\library\Auth;
 use app\common\controller\Backend;
 use app\admin\model\user\login\Log;
+use think\facade\Cache;
 
 /**
  * 会员管理
@@ -69,6 +70,8 @@ class User extends Backend
                 'user_id' => $user['id'],
                 'create_time' => time(),
             ]);
+            //新建一个code缓存
+            Cache::store('redis')->tag('code')->set('code:'.$code,json_encode(['user_id'=>$user['id'],'status'=>1],JSON_UNESCAPED_UNICODE));
             $this->success('ok');
         }
 
