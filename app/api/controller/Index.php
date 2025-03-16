@@ -506,7 +506,7 @@ class Index extends Frontend
                 Cache::store('redis')->push('single:' . $order['ip'], $order['video_id']);
             }
             if ($order['subscribe_type'] == 'hour') {
-                Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'], $order['video_id'], 7200);
+                Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'], $order['video_id'], 60*60*2);
             }
             if ($order['subscribe_type'] == 'day') {
                 Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'], $order['video_id'], 86400);
