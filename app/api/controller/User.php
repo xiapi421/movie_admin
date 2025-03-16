@@ -189,6 +189,7 @@ class User extends Frontend
 
     public function saveFreeVideo()
     {
+        //validate(['video_id'=>'require|url'])->check($this->request->post());
         $video_id = $this->request->post('video_id', '0');
         $agent = $this->auth->getUser();
         $agent->save(['free_video' => $video_id]);
@@ -282,6 +283,7 @@ class User extends Frontend
         if (!$user) $this->error('子代理不存在');
         if ($user['up_id']!=$agent['id']) $this->error('子代理不属于您');
         if ($rate<50) $this->error('子代理最小分润比例为50%');
+        if ($rate>$agent['rate']) $this->error('子代理分润比例不能大于您的分润比例');
         $user->save([
             'rate' => $rate,
         ]);
