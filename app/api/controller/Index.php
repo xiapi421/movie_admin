@@ -84,7 +84,7 @@ class Index extends Frontend
         // if ($codeModel['status'] == 0) $this->error('error', ['fly' => $wrongUrl], 1003);
         if ($codeInfo['user_id'] < 1) $this->error('error', ['fly' => $wrongUrl], 1003);
 
-        $agent = User::where('id', $codeInfo['user_id'])->field('id,username,single_price,day_price,week_price,month_price,status,share_status,pay_status,theme_id,free_video')->cache(true,86400*2)->find();
+        $agent = User::where('id', $codeInfo['user_id'])->field('id,username,single_price,day_price,hour_price,week_price,month_price,status,share_status,pay_status,theme_id,free_video')->cache(true,86400*2)->find();
         if (!$agent) $this->error('error', ['fly' => $wrongUrl], 1002);
         if ($agent['status'] != '1' || $agent['share_status'] != 1) $this->error('error', ['fly' => $wrongUrl], 1003);
         // TODO::判断用户是否黑ip
