@@ -226,7 +226,7 @@ class Index extends Frontend
                 $price = $agent['single_price'];
                 break;
             case 'hour':
-                    $price = $agent['day_price'];
+                $price = $agent['hour_price'];
             case 'day':
                 $price = $agent['day_price'];
                 break;

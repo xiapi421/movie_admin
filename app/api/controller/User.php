@@ -165,7 +165,7 @@ class User extends Frontend
         $min_hour = get_sys_config('min_hour');
         if($data['single_price']<$min_single) $this->error('单片最低价格不能低于'.$min_single);
         if($data['day_price']<$min_day) $this->error('单日最低价格不能低于'.$min_day);
-        if($data['hour_price']<$min_day) $this->error('包时最低价格不能低于'.$min_hour);
+        if($data['hour_price']<$min_hour) $this->error('包时最低价格不能低于'.$min_hour);
 
         $agent['single_price'] = $data['single_price'];
         $agent['day_price'] = $data['day_price'];
