@@ -84,6 +84,11 @@ class Index extends Frontend
         $paidVideo = Cache::store('redis')->get('single:' . $ip);
         $data = [
             'agent' => $agent,
+            'payOption'=>[
+                '单片购买'=>$agent['single_price'],
+                '两小时观看'=>$agent['hour_price'],
+                '包天观看'=>$agent['day_price'],
+            ],
             'payChannel' => $payChannel,
             'freeVideo' => $agent['free_video'] == '0' ? '0' : ['videoUrl' => $agent['free_video']],
             'paidVideo' => Db::name('videos')->where('id', 'in', $paidVideo)->select()->toArray(),
