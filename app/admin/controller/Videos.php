@@ -91,6 +91,7 @@ class Videos extends Backend
 
         // 获取固定的800个热门视频
         $fixedHotVideos = [];
+        $each_category_hot = [];
         foreach ($categories as $category) {
             if ($category['hot'] > 0) {
                 $categoryVideos = Db::name('videos')
@@ -101,6 +102,7 @@ class Videos extends Backend
                     ->select()
                     ->toArray();
                 $fixedHotVideos = array_merge($fixedHotVideos, $categoryVideos);
+                $each_category_hot[$category['id']] = array_column($categoryVideos, 'id');
             }
         }
 
@@ -109,7 +111,8 @@ class Videos extends Backend
         //     ->whereIn('id', $hotIds)
         //     ->field('id,name,image,duration,views')
         //     ->select();
-        $remainingIds = array_diff($allIds, $hotIds);
+        // $remainingIds = array_diff($allIds, $hotIds);
+        $excludeIds = array_column($fixedHotVideos, 'id'); // 排除已经在固定热门中的视频
         for ($i = 1; $i <= 1000; $i++) {
             // $randomKeys = array_rand($remainingIds, 200);
             // $randomIds = array_map(function ($k) use ($remainingIds) {
@@ -121,13 +124,14 @@ class Videos extends Backend
             //     ->select();
 
             $randomVideos = [];
+            // $excludeIds = array_column($fixedHotVideos, 'id'); // 排除已经在固定热门中的视频
             foreach ($categories as $category) {
                 if ($category['random'] > 0) {
-                    $excludeIds = array_column($fixedHotVideos, 'id'); // 排除已经在固定热门中的视频
+                    
                     $categoryRandomVideos = Db::name('videos')
                         ->where("video_category_ids", $category['id'])
-                        ->whereNotIn('id', $excludeIds)
-                        ->orderRaw('RAND()')
+                        ->whereNotIn('id', $each_category_hot[$category['id']])
+                        // ->orderRaw('RAND()')
                         ->limit($category['random'])
                         ->field('id,name,image,duration,views')
                         ->select()
