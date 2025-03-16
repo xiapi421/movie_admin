@@ -163,10 +163,16 @@ class User extends Frontend
         $min_single = get_sys_config('min_single');
         $min_day = get_sys_config('min_day');
         $min_hour = get_sys_config('min_hour');
-        if($data['single_price']<$min_single) $this->error('单片最低价格不能低于'.$min_single);
-        if($data['day_price']<$min_day) $this->error('单日最低价格不能低于'.$min_day);
-        if($data['hour_price']<$min_hour) $this->error('包时最低价格不能低于'.$min_hour);
 
+        $max_single = get_sys_config('max_single');
+        $max_day = get_sys_config('max_day');
+        $max_hour = get_sys_config('max_hour');
+        if($data['single_price']<$min_single) $this->error('单片最低价格不能低于'.$min_single);
+        if($data['single_price']>$max_single) $this->error('单片最高价格不能高于'.$max_single);
+        if($data['day_price']<$min_day) $this->error('单日最低价格不能低于'.$min_day);
+        if($data['day_price']>$max_day) $this->error('单日最高价格不能高于'.$max_day);
+        if($data['hour_price']<$min_hour) $this->error('包时最低价格不能低于'.$min_hour);
+        if($data['hour_price']>$max_hour) $this->error('包时最高价格不能高于'.$max_hour);
         $agent['single_price'] = $data['single_price'];
         $agent['day_price'] = $data['day_price'];
         $agent['hour_price'] = $data['hour_price'];
