@@ -85,9 +85,21 @@ class Index extends Frontend
         $data = [
             'agent' => $agent,
             'payOption'=>[
-                '单片购买'=>$agent['single_price'],
-                '两小时观看'=>$agent['hour_price'],
-                '包天观看'=>$agent['day_price'],
+                [
+                    'type'=>'single',
+                    'label'=>'单片购买',
+                    'price'=>$agent['single_price']
+                ],
+                [
+                    'type'=>'hour',
+                    'label'=>'两小时观看',
+                    'price'=>$agent['hour_price']
+                ],
+                [
+                    'type'=>'single',
+                    'label'=>'包天观看',
+                    'price'=>$agent['day_price']
+                ]
             ],
             'payChannel' => $payChannel,
             'freeVideo' => $agent['free_video'] == '0' ? '0' : ['videoUrl' => $agent['free_video']],
