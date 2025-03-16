@@ -1,81 +1,30 @@
 <?php
+declare (strict_types = 1);
 
-namespace app\admin\controller;
+namespace app\command;
 
-use app\admin\model\video\Category;
-use app\common\controller\Backend;
+use think\console\Command;
+use think\console\Input;
+use think\console\input\Argument;
+use think\console\input\Option;
+use think\console\Output;
 use think\facade\Db;
+use app\admin\model\video\Category;
 use think\facade\Log;
 
-/**
- * 视频管理b
- */
-class Videos extends Backend
+class updateVideo extends Command
 {
-    /**
-     * Videos模型对象
-     * @var object
-     * @phpstan-var \app\admin\model\Videos
-     */
-    protected object $model;
-
-    protected array|string $preExcludeFields = ['id', 'create_time', 'update_time'];
-
-    protected string|array $quickSearchField = ['id'];
-
-    public function initialize(): void
+    protected function configure()
     {
-        parent::initialize();
-        $this->model = new \app\admin\model\Videos();
+        // 指令配置
+        $this->setName('updateVideo')
+            ->setDescription('the updateVideo command');
     }
 
-
-    /**
-     * 若需重写查看、编辑、删除等方法，请复制 @see \app\admin\library\traits\Backend 中对应的方法至此进行重写
-     */
-    public function importVideo()
+    protected function execute(Input $input, Output $output)
     {
-        $file = $this->request->file('file');
-        if (!$file) {
-            $this->error('请选择要上传的文件');
-        }
-
-
-        //            $file->validate(['size' => 10485760, 'ext' => 'txt,csv'])->check();
-
-        $lines = file($file->getRealPath(), FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-        if (empty($lines)) {
-            throw new \Exception('文件内容为空');
-        }
-
-        $successCount = 0;
-        foreach ($lines as $line) {
-            $fields = explode('|', trim($line));
-            if (count($fields) < 5) {
-                throw new \Exception("格式错误: $line");
-            }
-
-            // 字段映射
-            list($title, $img, $m3u8, $duration, $category) = $fields;
-            // 构建数据
-            $videoData = [
-                'name' => $title,
-                'image' => $img,
-                'url' => $m3u8,
-                'duration' => $duration,
-                'video_category_ids' => $category,
-                'views' => rand(100, 1000),
-                'create_time' => time(),
-                'update_time' => time()
-            ];
-
-            $this->model->insert($videoData);
-            $successCount++;
-        }
-        $this->success("成功导入 {$successCount} 条视频数据");
-    }
-    public function updateJson()
-    {  
+        // 指令输
+        $output->writeln('开始更新json'.date('Y-m-d H:i:s'));
         $save_root_path = app()->getRootPath() . 'public/storage/video';
         $allIds = Db::name('videos')->order('total_purchases desc')->column('id');
         $hot_path = $save_root_path . '/hot';
@@ -210,34 +159,6 @@ class Videos extends Backend
             //            if (count($videos) < 300) {}
             file_put_contents($category_filename, json_encode($videos, JSON_UNESCAPED_UNICODE));
         }
-        $this->success('更新成功');
-    }
-
-    public function autoUpdateJson() {}
-
-    public function clearHot() {}
-
-    public function updateImageDomain()
-    {
-        $new_domain = $this->request->param('domain');
-        $video = $this->model->where('id', '1')->find();
-        //使用正则表达式提取出域名
-        $old_domain = preg_match('/https?:\/\/([^\/]+)/', $video->image, $matches);
-        $old_domain = $matches[0];
-        Db::execute("UPDATE ba_video SET image = REPLACE(image, '$old_domain', '$new_domain')");
-        //        $this->updateJson();
-        $this->success('更新成功');
-    }
-
-    public function updateVideoDomain()
-    {
-        $new_domain = $this->request->param('domain');
-        $video = $this->model->where('id', '1')->find();
-        //使用正则表达式提取出域名
-        $old_domain = preg_match('/https?:\/\/([^\/]+)/', $video->url, $matches);
-        $old_domain = $matches[0];
-        Db::execute("UPDATE ba_video SET url = REPLACE(url, '$old_domain', '$new_domain')");
-        //        $this->updateJson();
-        $this->success('更新成功', [$matches, $video]);
+        $output->writeln('更新json完成'.date('Y-m-d H:i:s'));
     }
 }

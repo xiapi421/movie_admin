@@ -7,5 +7,6 @@ return [
     'commands' => [
         'hello' => 'app\command\Hello',
         'tongji' => 'app\command\Tongji',
+        'updatevideo' => 'app\command\updateVideo',
     ],
 ];
