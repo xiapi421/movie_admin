@@ -33,6 +33,6 @@ class Theme extends Backend
 
     public function getImageAttr($value)
     {
-        return  request()->domain().'/'.$value;
+        return  env('app.host').'/'.$value;
     }
 }
