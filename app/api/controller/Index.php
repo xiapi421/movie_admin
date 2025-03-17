@@ -101,7 +101,7 @@ class Index extends Frontend
         $payChannel = Db::name('pay')->where('status', 1)
             ->field('id,name,select,weigh,remark,android_status,ios_status,small_status,big_status')
             ->order('weigh desc')->select();
-        $paidVideo = Cache::store('redis')->handler()->lrange('single:' . $ip, 0, -1);
+        $paidVideo = Cache::store('redis')->handler()->lrange('single:' . $ip.':'.$codeInfo['user_id'], 0, -1);
         $data = [
             'agent' => $agent,
             'payOption' => [
@@ -124,7 +124,7 @@ class Index extends Frontend
             'payChannel' => $payChannel,
             'freeVideo' => $agent['free_video'] == '0' ? '0' : ['videoUrl' => $agent['free_video']],
             'paidVideo' => Db::name('videos')->where('id', 'in', $paidVideo)->select()->toArray(),
-            'isVip' => Cache::store('redis')->get('term:' . $ip, 0),
+            'isVip' => Cache::store('redis')->get('term:' . $ip.':'.$codeInfo['user_id'], 0),
             //            'isVip'=>1,
             'random_hot' => (int)get_sys_config('random_hot'),
             'hot_pages' => (int)get_sys_config('hot_pages'),
