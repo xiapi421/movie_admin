@@ -3,6 +3,7 @@
 namespace app\api\controller;
 
 use app\admin\model\Bucket;
+use app\admin\model\Code;
 use app\admin\model\Link;
 use app\admin\model\Notice;
 use app\admin\model\Order;
@@ -309,6 +310,8 @@ class User extends Frontend
     public function addLink()
     {
         $agent = $this->auth->getUser();
+        $code = Code::where('user_id', $agent['id'])->where('status', 1)->find();
+        if(!$code) $this->error('请先创建一个推广码');
         $bucket = Bucket::where('status', '1')->find();
         $cosClient = new CosClient(
             array(
@@ -324,36 +327,25 @@ class User extends Frontend
         //设置文件的content-type
         $contentType = 'text/html';
         $uuid = Uuid::uuid4()->toString();
-        $zzdir = Str::random(10);
-        $lddir = Str::random(10);
-        $zzfilename = Str::random(10) . '.html';
-        $ldfilename = Str::random(10) . '.html';
+        $dir = Str::random(10);
+        $dateStr = date('Ymd');
+        $dirb = Str::random(10);
+
+        $filename = Str::random(10) . '.html';
         $cosClient->upload(
             $bucket['bucket'],
-            $zzdir . '/' . $zzfilename,
-            file_get_contents(root_path() . 'public/zz.html'),
+            $dir . '/'.$dateStr . '/' . $dirb . '/' . $filename,
+            file_get_contents(root_path() . 'public/rukou.html'),
             array(
                 'Content-Type' => $contentType
             )
         );
-        $cosClient->upload(
-            $bucket['bucket'],
-            $lddir . '/' . $ldfilename,
-            file_get_contents(root_path() . 'public/front.html'),
-            array(
-                'Content-Type' => $contentType
-            )
-        );
-        
-        $ldurl = $bucket['url'] . '/' . $lddir . '/' . $ldfilename;
-        $zzurl = $bucket['url'] . '/' . $zzdir . '/' . $zzfilename;
+        $url = 'https://cos.ap-nanjing.myqcloud.com/' . $dir . '/' . $dateStr . '/' . $dirb . '/' . $filename.'?bucket='.$bucket['bucket'].'&ic='.$code['code'];
 
         $link = Link::create([
             'bucket' => $uuid,
             'user_id' => $agent['id'],
-            'url'=>'https://www.baidu.com',
-            'zzurl' => $zzurl,
-            'ldurl' => $ldurl,
+            'url'=>$url,
         ]);
         $this->success('ok', ['wechat_link' => [$link->hidden(['id','bucket','url','create_time','update_time'])]]);
     }

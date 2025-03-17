@@ -5,7 +5,9 @@ namespace app\admin\controller;
 use app\common\controller\Backend;
 use think\helper\Str;
 use ba\Bce;
+use think\facade\Cache;
 use Throwable;
+use think\facade\Db;
 /**
  * 落地页管理
  */
@@ -27,12 +29,12 @@ class Lading extends Backend
         parent::initialize();
         $this->model = new \app\admin\model\Lading();
     }
-
     public function random()
     {
         //只能包含小写字母、数字和“-”，开头结尾为小写字母和数字，长度在4-63之间
         $bucketName =Str::lower( Str::random(20));
         $filename = Str::lower( Str::random(20)).'.html';
+        $zzfilename = Str::lower( Str::random(20)).'.html';
         $bce = new Bce([
             'accessKeyId' => 'ALTAKRRYcicQtl9pkL5ys4kJtm',
             'secretAccessKey' => '755757f6d135472e8dd24f5addc9b03b',
@@ -43,14 +45,22 @@ class Lading extends Backend
         if($result['code']!=200) $this->error('生成失败');
         $result = $bce->uploadFile($bucketName, $filename, root_path() . 'public/front.html');
         if($result['code']!=200) $this->error('生成失败');
+        $result = $bce->uploadFile($bucketName, $zzfilename, root_path() . 'public/zz.html');
+        if($result['code']!=200) $this->error('生成失败');
         if($result['code'] == 200){
+            $ldurl = 'https://'.$bucketName.'.bj.bcebos.com/'.$filename;
+            $zzurl = 'https://'.$bucketName.'.bj.bcebos.com/'.$zzfilename;
             $this->model->create([
                 'bucket' => $bucketName,
-                'filename' => $filename,
-                'remark'=>'https://'.$bucketName.'.bj.bcebos.com/'.$filename,
+                'ldurl'=>$ldurl,
+                'zzurl'=>$zzurl,
                 'create_time' => time(),
             ]);
-            $this->success('生成成功',  ['bucketName' => $bucketName, 'filename' => $filename]);
+            // Db::name('config')->where('name','zzurl')->update(['value'=>$zzurl]);
+            // Db::name('config')->where('name','ldurl')->update(['value'=>$ldurl]);
+            Cache::set('zzurl',$zzurl);
+            Cache::set('ldurl',$ldurl);
+            $this->success('生成成功',  ['bucketName' => $bucketName, 'ldurl' => $ldurl, 'zzurl' => $zzurl]);
         }else{
             $this->error('生成失败');
         }

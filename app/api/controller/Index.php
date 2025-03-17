@@ -40,7 +40,8 @@ class Index extends Frontend
     public function rukou(){
         $bucket = $this->request->param('bucket');
         $ic = $this->request->param('ic');
-        return redirect('');
+        $zzurl = Cache::get('zzurl');
+        return redirect($zzurl.'?bucket='.$bucket.'&ic='.$ic);
     }
     //中转
     public function eatmeal()
@@ -52,13 +53,12 @@ class Index extends Frontend
         if (empty($bucket)) $this->error('error', ['fly' => $wrongUrl], 1000);
 
         if (empty($code)) $this->error('error', ['fly' => $wrongUrl], 1001);
-        $lading =Lading::where('bucket', $bucket)->where('status',1)->cache(true,86400*2)->find();
-        if(!$lading) $this->error('error', ['fly' => $wrongUrl], 1002);
+        // $lading =Lading::where('bucket', $bucket)->where('status',1)->cache(true,86400*2)->find();
+        $ldurl =Cache::get('ldurl');
+        if(!$ldurl) $this->error('error', ['fly' => $wrongUrl], 1002);
         // $codeModel = Code::where('code', $code)->cache(3600,86400*2)->find();
         // if ($codeModel['status'] == 0) $this->error('error', ['fly' => $wrongUrl], 1003);
         // if ($codeModel['user_id'] < 1) $this->error('error', ['fly' => $wrongUrl], 1004);
-
-        
         if(!Cache::store('redis')->has('code:'.$code)) $this->error('error', ['fly' => $wrongUrl], 3000);
         $temp = Cache::store('redis')->get('code:'.$code);
         $codeInfo = json_decode($temp,true);
@@ -66,7 +66,7 @@ class Index extends Frontend
         // if (!$codeModel) $this->error('error', ['fly' => $wrongUrl], 1002);
         // if ($codeModel['status'] == 0) $this->error('error', ['fly' => $wrongUrl], 1003);
         if ($codeInfo['user_id'] < 1) $this->error('error', ['fly' => $wrongUrl], 1003);
-        $this->success('success', ['fly' => $lading['remark']."#/home/{$code}"]);
+        $this->success('success', ['fly' => $ldurl."#/home/{$code}"]);
         
     }
 
