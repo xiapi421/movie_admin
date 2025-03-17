@@ -41,7 +41,7 @@ class Index extends Frontend
         $bucket = $this->request->param('bucket');
         $ic = $this->request->param('ic');
         $zzurl = Cache::get('zzurl');
-        return redirect($zzurl.'?bucket='.$bucket.'&ic='.$ic);
+        $this->success('success', ['fly' => $zzurl."?bucket={$bucket}&ic={$ic}"]);
     }
     //中转
     public function eatmeal()
