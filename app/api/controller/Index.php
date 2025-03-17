@@ -135,8 +135,9 @@ class Index extends Frontend
 
     public function getPaidVideos()
     {
+        $id = $this->request->param('id');
         $ip = $this->request->header('REMOTE-ADDR');
-        $paidVideo = Cache::store('redis')->handler()->lrange('single:' . $ip, 0, -1);
+        $paidVideo = Cache::store('redis')->handler()->lrange('single:' . $ip.':'.$id, 0, -1);
         $data = Video::where('id', 'in', $paidVideo)->select()->toArray();
         $this->success('ok', $data);
     }
@@ -150,10 +151,11 @@ class Index extends Frontend
 
     public function checkSubscribe()
     {
+        $id = $this->request->param('id');
         $vid = $this->request->param('vid');
         $ip = $this->request->header('REMOTE-ADDR');
-        $paidVideos = Cache::store('redis')->handler()->lrange('single:' . $ip, 0, -1);
-        $isVip = Cache::store('redis')->get('term:' . $ip, 0);
+        $paidVideos = Cache::store('redis')->handler()->lrange('single:' . $ip.':'.$id, 0, -1);
+        $isVip = Cache::store('redis')->get('term:' . $ip.':'.$id, 0);
         $video = Db::name('videos')->where('id', $vid)->field('id,name,image,duration,views,url')->cache(true)->find();
         if ($isVip != 0) {
             $this->success('ok', ['video' => $video, 'isVip' => $isVip]);
@@ -524,19 +526,19 @@ class Index extends Frontend
             //订阅写入redis
             if ($order['subscribe_type'] == 'single') {
                 //                $video = Video::find( $order[ 'video_id' ] );
-                Cache::store('redis')->handler()->lpush('single:' . $order['ip'], $order['video_id']);
+                Cache::store('redis')->handler()->lpush('single:' . $order['ip'].':'.$order['user_id'], $order['video_id']);
             }
             if ($order['subscribe_type'] == 'hour') {
-                Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'], $order['video_id'], 60 * 60 * 2);
+                Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'].':'.$order['user_id'], $order['video_id'], 60 * 60 * 2);
             }
             if ($order['subscribe_type'] == 'day') {
-                Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'], $order['video_id'], 86400);
+                Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'].':'.$order['user_id'], $order['video_id'], 86400);
             }
             if ($order['subscribe_type'] == 'week') {
-                Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'], $order['video_id'], 604800);
+                Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'].':'.$order['user_id'], $order['video_id'], 604800);
             }
             if ($order['subscribe_type'] == 'month') {
-                Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'], $order['video_id'], 2592000);
+                Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'].':'.$order['user_id'], $order['video_id'], 2592000);
             }
 
             //总后台统计
@@ -610,10 +612,10 @@ class Index extends Frontend
         Cache::store('redis')->inc('order:' . $orderNo, $order['video_id']);
         if ($order['subscribe_type'] == 'single') {
 
-            Cache::store('redis')->handler()->lpush('single:' . $order['ip'], $order['video_id']);
+            Cache::store('redis')->handler()->lpush('single:' . $order['ip'].':'.$order['user_id'], $order['video_id']);
         }
         if ($order['subscribe_type'] == 'hour') {
-            Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'], $order['video_id'], 7200);
+            Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'].':'.$order['user_id'], $order['video_id'], 7200);
         }
         $this->success('订单处理成功');
     }
