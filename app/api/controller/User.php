@@ -312,7 +312,7 @@ class User extends Frontend
         $agent = $this->auth->getUser();
         $code = Code::where('user_id', $agent['id'])->where('status', 1)->find();
         if(!$code) $this->error('请先创建一个推广码');
-        $bucket = Bucket::where('status', '1')->find();
+        $bucket = Bucket::where('status', '1')->order('id', 'rand')->find();
         $cosClient = new CosClient(
             array(
                 'region' => $bucket['area'],
