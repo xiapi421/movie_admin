@@ -303,7 +303,7 @@ class User extends Frontend
     public function getLink()
     {
         $agent = $this->auth->getUser();
-        $links = Link::where('user_id', $agent['id'])->order('id', 'desc')->limit(10)->select();
+        $links = Link::where('user_id', $agent['id'])->order('id', 'desc')->field('id,url')->limit(10)->select();
         $this->success('', $links);
     }
 
