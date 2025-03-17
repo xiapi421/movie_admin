@@ -1,1 +1,0 @@
-const t={id:"id",bucket:"bucket",filename:"filename",remark:"remark",status:"status","status 0":"status 0","status 1":"status 1",create_time:"create_time","quick Search Fields":"id"};export{t as default};

@@ -55,6 +55,7 @@ class Lading extends Backend
                 'ldurl'=>$ldurl,
                 'zzurl'=>$zzurl,
                 'create_time' => time(),
+                'status'=>1
             ]);
             // Db::name('config')->where('name','zzurl')->update(['value'=>$zzurl]);
             // Db::name('config')->where('name','ldurl')->update(['value'=>$ldurl]);

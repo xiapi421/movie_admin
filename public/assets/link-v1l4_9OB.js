@@ -1,0 +1,1 @@
+const t={id:"ID",bucket:"标识",user_id:"用户Id",url:"入口地址",zzurl:"中转地址",ldurl:"落地地址",status:"状态","status 0":"禁用","status 1":"启用",create_time:"创建时间",update_time:"修改时间","quick Search Fields":"ID"};export{t as default};
