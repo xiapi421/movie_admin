@@ -50,7 +50,7 @@ class Index extends Frontend
         $bucket = $this->request->param('bucket');
         $code = $this->request->param('ic');
         $sign = $this->request->param('sign');
-        if (empty($bucket)) $this->error('error', ['fly' => $wrongUrl], 1000);
+        // if (empty($bucket)) $this->error('error', ['fly' => $wrongUrl], 1000);
 
         if (empty($code)) $this->error('error', ['fly' => $wrongUrl], 1001);
         // $lading =Lading::where('bucket', $bucket)->where('status',1)->cache(true,86400*2)->find();
