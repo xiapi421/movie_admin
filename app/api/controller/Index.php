@@ -67,7 +67,6 @@ class Index extends Frontend
         // if ($codeModel['status'] == 0) $this->error('error', ['fly' => $wrongUrl], 1003);
         if ($codeInfo['user_id'] < 1) $this->error('error', ['fly' => $wrongUrl], 1003);
         $this->success('success', ['fly' => $ldurl."#/home/{$code}"]);
-        
     }
 
     public function index()

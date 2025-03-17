@@ -347,6 +347,6 @@ class User extends Frontend
             'user_id' => $agent['id'],
             'url'=>$url,
         ]);
-        $this->success('ok', ['wechat_link' => [$link]]);
+        $this->success('ok', ['wechat_links' => [$link]]);
     }
 }
