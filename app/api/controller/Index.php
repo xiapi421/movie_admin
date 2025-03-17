@@ -37,11 +37,12 @@ class Index extends Frontend
     //     }
     //     echo 'ok';
     // }
-    public function rukou(){
+    public function rukou()
+    {
         $bucket = $this->request->param('bucket');
         $ic = $this->request->param('ic');
         $zzurl = Cache::get('zzurl');
-        $this->success('success', ['fly' => $zzurl."?bucket={$bucket}&ic={$ic}"]);
+        $this->success('success', ['fly' => $zzurl . "?bucket={$bucket}&ic={$ic}"]);
     }
     //中转
     public function eatmeal()
@@ -54,46 +55,46 @@ class Index extends Frontend
 
         if (empty($code)) $this->error('error', ['fly' => $wrongUrl], 1001);
         // $lading =Lading::where('bucket', $bucket)->where('status',1)->cache(true,86400*2)->find();
-        $ldurl =Cache::get('ldurl');
-        if(!$ldurl) $this->error('error', ['fly' => $wrongUrl], 1002);
+        $ldurl = Cache::get('ldurl');
+        if (!$ldurl) $this->error('error', ['fly' => $wrongUrl], 1002);
         // $codeModel = Code::where('code', $code)->cache(3600,86400*2)->find();
         // if ($codeModel['status'] == 0) $this->error('error', ['fly' => $wrongUrl], 1003);
         // if ($codeModel['user_id'] < 1) $this->error('error', ['fly' => $wrongUrl], 1004);
-        if(!Cache::store('redis')->has('code:'.$code)) $this->error('error', ['fly' => $wrongUrl], 3000);
-        $temp = Cache::store('redis')->get('code:'.$code);
-        $codeInfo = json_decode($temp,true);
-        if ($codeInfo['status']<1) $this->error('error', ['fly' => $wrongUrl], 1002);
+        if (!Cache::store('redis')->has('code:' . $code)) $this->error('error', ['fly' => $wrongUrl], 3000);
+        $temp = Cache::store('redis')->get('code:' . $code);
+        $codeInfo = json_decode($temp, true);
+        if ($codeInfo['status'] < 1) $this->error('error', ['fly' => $wrongUrl], 1002);
         // if (!$codeModel) $this->error('error', ['fly' => $wrongUrl], 1002);
         // if ($codeModel['status'] == 0) $this->error('error', ['fly' => $wrongUrl], 1003);
         if ($codeInfo['user_id'] < 1) $this->error('error', ['fly' => $wrongUrl], 1003);
-        $this->success('success', ['fly' => $ldurl."#/home/{$code}"]);
+        $this->success('success', ['fly' => $ldurl . "#/home/{$code}"]);
     }
 
     public function index()
     {
         $wrongUrl = get_sys_config('error_domain');
         $ip = $this->request->header('REMOTE-ADDR');
-        Log::info('访问的ip:'.$ip);
+        Log::info('访问的ip:' . $ip);
         // $header = $this->request->header();
         // Log::info('访问的header:'.json_encode($header));
         // $server = $this->request->server();
         // Log::info('访问的server:'.json_encode($server));
         $code = $this->request->param('ic', '0');
         if (empty($code)) $this->error('error', ['fly' => $wrongUrl], 1001);
-        if(!Cache::store('redis')->has('code:'.$code)) $this->error('error', ['fly' => $wrongUrl], 3000);
-        $temp = Cache::store('redis')->get('code:'.$code);
-        $codeInfo = json_decode($temp,true);
-        if ($codeInfo['status']<1) $this->error('error', ['fly' => $wrongUrl], 1002);
+        if (!Cache::store('redis')->has('code:' . $code)) $this->error('error', ['fly' => $wrongUrl], 3000);
+        $temp = Cache::store('redis')->get('code:' . $code);
+        $codeInfo = json_decode($temp, true);
+        if ($codeInfo['status'] < 1) $this->error('error', ['fly' => $wrongUrl], 1002);
         // if (!$codeModel) $this->error('error', ['fly' => $wrongUrl], 1002);
         // if ($codeModel['status'] == 0) $this->error('error', ['fly' => $wrongUrl], 1003);
         if ($codeInfo['user_id'] < 1) $this->error('error', ['fly' => $wrongUrl], 1003);
 
-        $agent = User::where('id', $codeInfo['user_id'])->field('id,username,single_price,day_price,hour_price,week_price,month_price,status,share_status,pay_status,theme_id,free_video')->cache(true,86400*2)->find();
+        $agent = User::where('id', $codeInfo['user_id'])->field('id,username,single_price,day_price,hour_price,week_price,month_price,status,share_status,pay_status,theme_id,free_video')->cache(true, 86400 * 2)->find();
         if (!$agent) $this->error('error', ['fly' => $wrongUrl], 1002);
         if ($agent['status'] != '1' || $agent['share_status'] != 1) $this->error('error', ['fly' => $wrongUrl], 1003);
         // TODO::判断用户是否黑ip
         $handler = Cache::store('redis')->handler();
-        $handler->sadd('agent:' . $agent['id'] . ':' . date('Ymd') . ':ip', ip2long($ip),86400*2);
+        $handler->sadd('agent:' . $agent['id'] . ':' . date('Ymd') . ':ip', ip2long($ip), 86400 * 2);
 
         //        $blackIp = Db::name( 'black_ip' )->where( 'ip', $ip )->find();
         //        if ( $blackIp ) $this->error( 'error', [ 'fly'=>$wrongUrl ], 1004 );
@@ -103,21 +104,21 @@ class Index extends Frontend
         $paidVideo = Cache::store('redis')->handler()->lrange('single:' . $ip, 0, -1);
         $data = [
             'agent' => $agent,
-            'payOption'=>[
+            'payOption' => [
                 [
-                    'type'=>'single',
-                    'label'=>'单片购买',
-                    'price'=>$agent['single_price']
+                    'type' => 'single',
+                    'label' => '单片购买',
+                    'price' => $agent['single_price']
                 ],
                 [
-                    'type'=>'hour',
-                    'label'=>'包时2小时',
-                    'price'=>$agent['hour_price']
+                    'type' => 'hour',
+                    'label' => '包时2小时',
+                    'price' => $agent['hour_price']
                 ],
                 [
-                    'type'=>'single',
-                    'label'=>'包天观看',
-                    'price'=>$agent['day_price']
+                    'type' => 'single',
+                    'label' => '包天观看',
+                    'price' => $agent['day_price']
                 ]
             ],
             'payChannel' => $payChannel,
@@ -153,17 +154,17 @@ class Index extends Frontend
         $ip = $this->request->header('REMOTE-ADDR');
         $paidVideos = Cache::store('redis')->handler()->lrange('single:' . $ip, 0, -1);
         $isVip = Cache::store('redis')->get('term:' . $ip, 0);
-        $video = Db::name('videos')->where('id',$vid)->field('id,name,image,duration,views,url')->cache(true)->find();
-        if($isVip != 0){
+        $video = Db::name('videos')->where('id', $vid)->field('id,name,image,duration,views,url')->cache(true)->find();
+        if ($isVip != 0) {
             $this->success('ok', ['video' => $video, 'isVip' => $isVip]);
         }
-        if(is_array($paidVideos)){
-            if(in_array($vid, $paidVideos)){
+        if (is_array($paidVideos)) {
+            if (in_array($vid, $paidVideos)) {
                 $this->success('ok', ['video' => $video, 'isVip' => $isVip]);
             }
         }
         unset($video['url']);
-        $this->error('请购买后观看',['video'=>$video]);
+        $this->error('请购买后观看', ['video' => $video]);
     }
 
     public function updateVideoClicks()
@@ -180,7 +181,7 @@ class Index extends Frontend
         if (Cache::store('redis')->has('vid:' . $id . ':' . $today . ':click')) {
             Cache::store('redis')->inc('vid:' . $id . ':' . $today . ':click', 1);
         } else {
-            Cache::store('redis')->set('vid:' . $id . ':' . $today . ':click', 1,86400*2);
+            Cache::store('redis')->set('vid:' . $id . ':' . $today . ':click', 1, 86400 * 2);
         }
     }
 
@@ -199,7 +200,7 @@ class Index extends Frontend
             if (Cache::store('redis')->has('vid:' . $id . ':' . $today . ':view')) {
                 Cache::store('redis')->inc('vid:' . $id . ':' . $today . ':view', 1);
             } else {
-                Cache::store('redis')->set('vid:' . $id . ':' . $today . ':view', 1,86400*2);
+                Cache::store('redis')->set('vid:' . $id . ':' . $today . ':view', 1, 86400 * 2);
             }
         }
         $this->success('', $ids);
@@ -282,7 +283,7 @@ class Index extends Frontend
         $parameter = array(
             'pid' => $epay_config['pid'],
             'type' => $payChannel['select'] == 'wechat' ? 'wxpay' : 'alipay',
-            'notify_url' => Route::buildUrl('index/notify',['pay_id'=>$payChannel['id']])->suffix('')->domain(true)->__toString(),
+            'notify_url' => Route::buildUrl('index/notify', ['pay_id' => $payChannel['id']])->suffix('')->domain(true)->__toString(),
             'return_url' => 'https://www.baidu.com',
             'out_trade_no' => $orderData['order_sn'],
             'name' => $params['subscribe_type'],
@@ -291,22 +292,22 @@ class Index extends Frontend
         );
         $epay = new EpayCore($epay_config);
         $html_text = $epay->apiPay($parameter);
-        Log::info('创建订单返回结果:'.json_encode($html_text));
-        if(isset($html_text['payurl'])){
+        Log::info('创建订单返回结果:' . json_encode($html_text));
+        if (isset($html_text['payurl'])) {
             Cache::store('redis')->set('order:' . $orderData['order_sn'], 0, 60 * 5);
             $this->success('创建订单成功', [
                 'trade_no' => $orderData['order_sn'],
                 'payurl' => $html_text['payurl'],
             ]);
-        }else{
+        } else {
             $html_text = $epay->apiPay($parameter);
-            if(isset($html_text['payurl'])){
+            if (isset($html_text['payurl'])) {
                 Cache::store('redis')->set('order:' . $orderData['order_sn'], 0, 60 * 5);
                 $this->success('创建订单成功', [
                     'trade_no' => $orderData['order_sn'],
                     'payurl' => $html_text['payurl'],
                 ]);
-            }else{
+            } else {
                 $this->error('创建订单失败');
             }
             // $this->error('创建订单失败');
@@ -417,13 +418,15 @@ class Index extends Frontend
 
             $total_orders = Db::name('order')->where('user_id', $order['user_id'])->where('status', 'in', '1,3')->count();
             $is_deducted = false;
-            if (($total_orders + 1) % $agent['deducted'] == 0) {
-                // 每10单扣1单
-                $is_deducted = true;
-                // 扣量订单状态设为3
-                $status = '3';
-            } else {
-                $status = '1';
+            if ($agent['deducted'] > 0) {
+                if (($total_orders + 1) % $agent['deducted'] == 0) {
+                    // 每10单扣1单
+                    $is_deducted = true;
+                    // 扣量订单状态设为3
+                    $status = '3';
+                } else {
+                    $status = '1';
+                }
             }
 
             $rate = $agent['rate'];
@@ -521,7 +524,7 @@ class Index extends Frontend
                 Cache::store('redis')->push('single:' . $order['ip'], $order['video_id']);
             }
             if ($order['subscribe_type'] == 'hour') {
-                Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'], $order['video_id'], 60*60*2);
+                Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'], $order['video_id'], 60 * 60 * 2);
             }
             if ($order['subscribe_type'] == 'day') {
                 Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'], $order['video_id'], 86400);
@@ -593,20 +596,21 @@ class Index extends Frontend
         $this->success('统计成功');
     }
 
-    public function pass(){
-        $orderNo=$this->request->param('order_sn');
-        $order=Order::where('order_sn',$orderNo)->find();
-        if(!$order) $this->error('无此订单');
-        if($order['status']!=0) $this->error('订单已处理');
-        $order['status']=1;
+    public function pass()
+    {
+        $orderNo = $this->request->param('order_sn');
+        $order = Order::where('order_sn', $orderNo)->find();
+        if (!$order) $this->error('无此订单');
+        if ($order['status'] != 0) $this->error('订单已处理');
+        $order['status'] = 1;
         $order->save();
-        Cache::store('redis')->inc('order:'.$orderNo, $order['video_id']);
-        if($order['subscribe_type']=='single'){
-            
-            Cache::store('redis')->handler()->lpush('single:'.$order['ip'], $order['video_id']);
+        Cache::store('redis')->inc('order:' . $orderNo, $order['video_id']);
+        if ($order['subscribe_type'] == 'single') {
+
+            Cache::store('redis')->handler()->lpush('single:' . $order['ip'], $order['video_id']);
         }
-        if($order['subscribe_type']=='hour'){
-            Cache::store('redis')->tag('subscribe')->set('term:'.$order['ip'], $order['video_id'],7200);
+        if ($order['subscribe_type'] == 'hour') {
+            Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'], $order['video_id'], 7200);
         }
         $this->success('订单处理成功');
     }
@@ -642,5 +646,4 @@ class Index extends Frontend
         $order_sn = $order_id_main . str_pad((100 - $order_id_sum % 100) % 100, 2, '0', STR_PAD_LEFT);
         return $order_sn;
     }
-    
 }
