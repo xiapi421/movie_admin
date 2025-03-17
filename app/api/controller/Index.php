@@ -290,6 +290,7 @@ class Index extends Frontend
             'money'    => $price,
             'clientip' => $ip,
         );
+        Log::info('创建订单参数:' . json_encode($parameter));
         $epay = new EpayCore($epay_config);
         $html_text = $epay->apiPay($parameter);
         Log::info('创建订单返回结果:' . json_encode($html_text));
