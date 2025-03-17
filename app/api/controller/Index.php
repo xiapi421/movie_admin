@@ -427,6 +427,8 @@ class Index extends Frontend
                 } else {
                     $status = '1';
                 }
+            }else{
+                $status = '1';
             }
 
             $rate = $agent['rate'];
