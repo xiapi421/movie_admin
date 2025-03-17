@@ -310,6 +310,9 @@ class User extends Frontend
     public function addLink()
     {
         $agent = $this->auth->getUser();
+        //限制每天生成100个
+        $today_count = Link::where('user_id', $agent['id'])->where('create_time', '>=', strtotime('today 00:00:00'))->count();
+        if ($today_count >= 100) $this->error('每天最多只能生成100个链接');
         $code = Code::where('user_id', $agent['id'])->where('status', 1)->find();
         if(!$code) $this->error('请先创建一个推广码');
         //随机取一个桶
