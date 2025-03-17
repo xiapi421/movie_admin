@@ -50,6 +50,7 @@ class User extends Backend
                 'group_id'        => 1,
                 'salt'            => $salt,
                 'single_price'    => get_sys_config('min_single'),
+                'hour_price'      => get_sys_config('min_hour'),
                 'day_price'    => get_sys_config('min_day'),
                 'week_price'    => get_sys_config('min_week'),
                 'month_price'    => get_sys_config('min_month'),
