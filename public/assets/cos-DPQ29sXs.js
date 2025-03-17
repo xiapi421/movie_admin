@@ -1,0 +1,1 @@
+const e={id:"ID",name:"桶名称",area:"地区",apiKey:"apiKey",secret:"secret",category:"分类",status:"状态","status 0":"禁用","status 1":"启用",create_time:"创建时间",update_time:"修改时间","quick Search Fields":"ID"};export{e as default};

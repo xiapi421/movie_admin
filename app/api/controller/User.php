@@ -2,26 +2,24 @@
 
 namespace app\api\controller;
 
+use app\admin\model\Bucket;
+use app\admin\model\Link;
 use app\admin\model\Notice;
 use app\admin\model\Order;
 use app\admin\model\Theme;
 use app\admin\model\user\login\Log;
-use app\admin\model\Video;
 use app\admin\model\Withdraw;
-use app\admin\model\UserMoneyLog;
 use think\facade\Cache;
 use think\facade\Db;
-use Throwable;
-use ba\Captcha;
-use ba\ClickCaptcha;
-use think\facade\Config;
 use app\common\facade\Token;
 use app\common\controller\Frontend;
 use app\api\validate\User as UserValidate;
-
+use Qcloud\Cos\Client as CosClient;
+use think\helper\Str;   
+use Ramsey\Uuid\Uuid;
 class User extends Frontend
 {
-    protected array $noNeedLogin = ['checkIn', 'logout', 'login','getAgentBySecret','info'];
+    protected array $noNeedLogin = ['checkIn', 'logout', 'login', 'getAgentBySecret', 'info'];
 
     protected array $noNeedPermission = ['index'];
 
@@ -33,26 +31,26 @@ class User extends Frontend
     public function info()
     {
         $data = [
-            'site_name'=>get_sys_config('site_name'),
+            'site_name' => get_sys_config('site_name'),
         ];
         $this->success('请求成功', $data);
     }
     public function getAgentBySecret()
     {
         $secret = $this->request->param('secret');
-        $agent= \app\admin\model\User::where('password',$secret)->find();
+        $agent = \app\admin\model\User::where('password', $secret)->find();
         if (!$agent) $this->error('请联系客服');
-        if ($agent['status']!=1) $this->error('请联系客服');
-        $this->success('',$agent);
+        if ($agent['status'] != 1) $this->error('请联系客服');
+        $this->success('', $agent);
     }
 
     public function login()
     {
-//        if ($this->auth->isLogin()) {
-//            $this->success(__('You have already logged in. There is no need to log in again~'), [
-//                'type' => $this->auth::LOGGED_IN
-//            ], $this->auth::LOGIN_RESPONSE_CODE);
-//        }
+        //        if ($this->auth->isLogin()) {
+        //            $this->success(__('You have already logged in. There is no need to log in again~'), [
+        //                'type' => $this->auth::LOGGED_IN
+        //            ], $this->auth::LOGIN_RESPONSE_CODE);
+        //        }
         $params = $this->request->post(['username', 'password']);
         $res = $this->auth->login($params['username'], $params['password'], true);
         if (isset($res) && $res === true) {
@@ -78,24 +76,24 @@ class User extends Frontend
 
     public function logout(): void
     {
-            $refreshToken = $this->request->post('refreshToken', '');
-            if ($refreshToken) Token::delete((string)$refreshToken);
-            $this->auth->logout();
-            $this->success();
+        $refreshToken = $this->request->post('refreshToken', '');
+        if ($refreshToken) Token::delete((string)$refreshToken);
+        $this->auth->logout();
+        $this->success();
     }
 
     public function index()
     {
         $agent = $this->auth->getUserInfo();
-        $notice = Notice::where('status',1)->order('id', 'desc')->select();
-        $total_income =Cache::store('redis')->get('agent:'.$agent['id'].':'.date('Ymd').':total_income');
-        $total_order =Cache::store('redis')->get('agent:'.$agent['id'].':'.date('Ymd').':total_order');
+        $notice = Notice::where('status', 1)->order('id', 'desc')->select();
+        $total_income = Cache::store('redis')->get('agent:' . $agent['id'] . ':' . date('Ymd') . ':total_income');
+        $total_order = Cache::store('redis')->get('agent:' . $agent['id'] . ':' . date('Ymd') . ':total_order');
         $handler = Cache::store('redis')->handler();
-        $today_ip=$handler->sCard('agent:'.$agent['id'].':'.date('Ymd').':ip');
-        $conversion_rate = $today_ip==0?0:round($total_order/$today_ip,2)*100;
+        $today_ip = $handler->sCard('agent:' . $agent['id'] . ':' . date('Ymd') . ':ip');
+        $conversion_rate = $today_ip == 0 ? 0 : round($total_order / $today_ip, 2) * 100;
         $data = [
-            'today_income' => $total_income/100,
-            'today_orders' => $total_order??0,
+            'today_income' => $total_income / 100,
+            'today_orders' => $total_order ?? 0,
             'today_ip' => $today_ip,
             'last_money' => 0,
             'last_orders' => 0,
@@ -111,8 +109,8 @@ class User extends Frontend
         $agent = $this->auth->getUser();
         $subscribe_type = $this->request->param('subscribe_type');
         $where = [
-            'user_id'=>$agent['id'],
-            'status'=>1,
+            'user_id' => $agent['id'],
+            'status' => 1,
         ];
         if ($subscribe_type) {
             $where['subscribe_type'] = $subscribe_type;
@@ -133,12 +131,12 @@ class User extends Frontend
         $agent = $this->auth->getUser();
         $payload = $this->request->param();
         $payload['user_id'] = $agent['id'];
-        if ($payload['money'] <500) $this->error('最小提现金额500');
-        if ($payload['txPassword']!=$agent['txPassword']) $this->error('提现密码错误');
+        if ($payload['money'] < 500) $this->error('最小提现金额500');
+        if ($payload['txPassword'] != $agent['txPassword']) $this->error('提现密码错误');
         if ($payload['money'] > $agent['money']) $this->error('余额不足');
         unset($payload['txPassword']);
         Withdraw::create($payload);
-        $agent->save(['money'=>$agent['money']-$payload['money']]);
+        $agent->save(['money' => $agent['money'] - $payload['money']]);
         $this->success('申请提现成功');
     }
 
@@ -167,16 +165,16 @@ class User extends Frontend
         $max_single = get_sys_config('max_single');
         $max_day = get_sys_config('max_day');
         $max_hour = get_sys_config('max_hour');
-        if($data['single_price']<$min_single) $this->error('单片最低价格不能低于'.$min_single);
-        if($data['single_price']>$max_single) $this->error('单片最高价格不能高于'.$max_single);
-        if($data['day_price']<$min_day) $this->error('单日最低价格不能低于'.$min_day);
-        if($data['day_price']>$max_day) $this->error('单日最高价格不能高于'.$max_day);
-        if($data['hour_price']<$min_hour) $this->error('包时最低价格不能低于'.$min_hour);
-        if($data['hour_price']>$max_hour) $this->error('包时最高价格不能高于'.$max_hour);
+        if ($data['single_price'] < $min_single) $this->error('单片最低价格不能低于' . $min_single);
+        if ($data['single_price'] > $max_single) $this->error('单片最高价格不能高于' . $max_single);
+        if ($data['day_price'] < $min_day) $this->error('单日最低价格不能低于' . $min_day);
+        if ($data['day_price'] > $max_day) $this->error('单日最高价格不能高于' . $max_day);
+        if ($data['hour_price'] < $min_hour) $this->error('包时最低价格不能低于' . $min_hour);
+        if ($data['hour_price'] > $max_hour) $this->error('包时最高价格不能高于' . $max_hour);
         $agent['single_price'] = $data['single_price'];
         $agent['day_price'] = $data['day_price'];
         $agent['hour_price'] = $data['hour_price'];
-        
+
         // $agent['week_price'] = $data['week_price'];
         // $agent['month_price'] = $data['month_price'];
         $agent->save();
@@ -207,11 +205,11 @@ class User extends Frontend
         $this->success('ok');
     }
 
-//    public function getVideoList()
-//    {
-//        $list =Video::order('id', 'desc')->paginate(20);
-//        $this->success('', $list);
-//    }
+    //    public function getVideoList()
+    //    {
+    //        $list =Video::order('id', 'desc')->paginate(20);
+    //        $this->success('', $list);
+    //    }
 
     public function getOrderTrend()
     {
@@ -259,29 +257,29 @@ class User extends Frontend
     {
         $agent = $this->auth->getUser();
         $users = \app\admin\model\User::where('up_id', $agent['id'])->select();
-        $today_money=0;
-        $today_sell=0;
-        $yesterday_sell=0;
+        $today_money = 0;
+        $today_sell = 0;
+        $yesterday_sell = 0;
         foreach ($users as $user) {
-            $today_money=$today_money+$user->money;
-            $today_sell=$today_sell+$user->today_sell;
-            $yesterday_sell = $yesterday_sell+$user->yesterday_sell;
+            $today_money = $today_money + $user->money;
+            $today_sell = $today_sell + $user->today_sell;
+            $yesterday_sell = $yesterday_sell + $user->yesterday_sell;
         }
-        $data =[
+        $data = [
             'agent' => $agent,
-            'rate'=>$agent['rate'],
-            'today_money'=>$today_money,
-            'today_sell'=>$today_sell,
-            'yesterday_sell'=>$yesterday_sell,
+            'rate' => $agent['rate'],
+            'today_money' => $today_money,
+            'today_sell' => $today_sell,
+            'yesterday_sell' => $yesterday_sell,
         ];
-        $this->success('ok',$data);
+        $this->success('ok', $data);
     }
 
     public function getSubUser()
     {
         $agent =  $this->auth->getUser();
-        $data = \app\admin\model\User::where('up_id',$agent['id'])->paginate(20);
-        $this->success('操作成功',$data);
+        $data = \app\admin\model\User::where('up_id', $agent['id'])->paginate(20);
+        $this->success('操作成功', $data);
     }
 
     public function setSubUserRate()
@@ -292,12 +290,71 @@ class User extends Frontend
         $rate = intval($rate);
         $user =  \app\admin\model\User::find($id);
         if (!$user) $this->error('子代理不存在');
-        if ($user['up_id']!=$agent['id']) $this->error('子代理不属于您');
-        if ($rate<50) $this->error('子代理最小分润比例为50%');
-        if ($rate>$agent['rate']) $this->error('子代理分润比例不能大于您的分润比例');
+        if ($user['up_id'] != $agent['id']) $this->error('子代理不属于您');
+        if ($rate < 50) $this->error('子代理最小分润比例为50%');
+        if ($rate > $agent['rate']) $this->error('子代理分润比例不能大于您的分润比例');
         $user->save([
             'rate' => $rate,
         ]);
         $this->success('ok');
+    }
+
+    public function getLink()
+    {
+        $agent = $this->auth->getUser();
+        $links = Link::where('user_id', $agent['id'])->order('id', 'desc')->limit(10)->select();
+        $this->success('', $links);
+    }
+
+    public function addLink()
+    {
+        $agent = $this->auth->getUser();
+        $bucket = Bucket::where('status', '1')->find();
+        $cosClient = new CosClient(
+            array(
+                'region' => $bucket['area'],
+                'scheme' => 'https', //协议头部，默认为 http
+                'credentials' => array(
+                    'secretId'  => $bucket['apiKey'],
+                    'secretKey' => $bucket['secret']
+                )
+            )
+        );
+        //随机目录名+随机文件名.html
+        //设置文件的content-type
+        $contentType = 'text/html';
+        $uuid = Uuid::uuid4()->toString();
+        $zzdir = Str::random(10);
+        $lddir = Str::random(10);
+        $zzfilename = Str::random(10) . '.html';
+        $ldfilename = Str::random(10) . '.html';
+        $cosClient->upload(
+            $bucket['bucket'],
+            $zzdir . '/' . $zzfilename,
+            file_get_contents(root_path() . 'public/zz.html'),
+            array(
+                'Content-Type' => $contentType
+            )
+        );
+        $cosClient->upload(
+            $bucket['bucket'],
+            $lddir . '/' . $ldfilename,
+            file_get_contents(root_path() . 'public/front.html'),
+            array(
+                'Content-Type' => $contentType
+            )
+        );
+        
+        $ldurl = $bucket['url'] . '/' . $lddir . '/' . $ldfilename;
+        $zzurl = $bucket['url'] . '/' . $zzdir . '/' . $zzfilename;
+
+        $link = Link::create([
+            'bucket' => $uuid,
+            'user_id' => $agent['id'],
+            'url'=>'https://www.baidu.com',
+            'zzurl' => $zzurl,
+            'ldurl' => $ldurl,
+        ]);
+        $this->success('ok', ['wechat_link' => [$link->hidden(['id','bucket','url','create_time','update_time'])]]);
     }
 }

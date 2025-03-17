@@ -37,6 +37,11 @@ class Index extends Frontend
     //     }
     //     echo 'ok';
     // }
+    public function rukou(){
+        $bucket = $this->request->param('bucket');
+        $ic = $this->request->param('ic');
+        return redirect('');
+    }
     //中转
     public function eatmeal()
     {
