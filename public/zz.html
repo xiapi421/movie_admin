@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+                       
+<head>  
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="pragma" content="no-cache">
+  <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+    
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" />
+  <meta http-equiv="expires" content="0">
+  <title>进入中</title>
+                                
+</head>   
+                                          
+                                                       
+<body>
+                               
+  <div onclick="myAlert()"
+    style="height: 50px;background-color: red;text-align: center;line-height: 50px;border-radius:25px;font-size: 20px;font-weight:bold;color: yellow;margin: auto;margin-top: 20%;">
+    点击手动进入</div>
+
+  <script type="text/javascript">
+
+    function GetQueryString(name) {
+      var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+      // var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
+      var r = window.location.search.substr(1).match(reg);
+      if (r != null) return unescape(r[2]); return null;
+    }
+    
+    bucket         =  GetQueryString("bucket");
+    str            =  GetQueryString("ic");
+    uopenid        =  GetQueryString("uopenid");
+    sign = Date.now();
+    
+    openid = "";
+    var baseUrl = "https://cloud.hzhph.com/index.php/api/index/eatmeal";
+    fetch(baseUrl + '?bucket=' + bucket + '&ic=' + str+'&sign=' + sign).then(res=>res.json()).then(data=>{
+      console.log(data);
+      if (data.code === 1) {
+        window.location.replace(data.data.fly);
+      } else {
+        alert(res.message);
+      }}).catch(err=>{
+        myAlert2()
+      }) 
+
+    function myAlert() {
+       location.reload();
+    }
+    
+    function myAlert2() {
+      setTimeout('window.location.reload()',1500)
+    }
+   
+        
+
+  </script>
+
+</body>
+
+</html>
