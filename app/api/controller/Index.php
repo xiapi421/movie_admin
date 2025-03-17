@@ -513,13 +513,13 @@ class Index extends Frontend
                     Cache::store('redis')->inc('agent:' . $order['user_id'] . ':' . date('Ymd') . ':total_order', 1);
                 }
 
-                if (!Cache::store('redis')->has('total:' . date('Ymd') . ':total_income')) {
+                if (!Cache::store('redis')->has('agent:' . $order['user_id'] . ':' . date('Ymd') . ':total_income')) {
                     Cache::store('redis')->set('agent:' . $order['user_id'] . ':' . date('Ymd') . ':total_income', (int)($agent_income * 100), 86400 * 2);
                 } else {
                     Cache::store('redis')->inc('agent:' . $order['user_id'] . ':' . date('Ymd') . ':total_income', (int)($agent_income * 100));
                 }
 
-                if (!Cache::store('redis')->has('total:' . date('Ymd') . ':total_sell')) {
+                if (!Cache::store('redis')->has('agent:' . $order['user_id'] . ':' . date('Ymd') . ':total_sell')) {
                     Cache::store('redis')->set('agent:' . $order['user_id'] . ':' . date('Ymd') . ':total_sell', $order['money'], 86400 * 2);
                 } else {
                     Cache::store('redis')->inc('agent:' . $order['user_id'] . ':' . date('Ymd') . ':total_sell', $order['money']);
@@ -629,7 +629,8 @@ class Index extends Frontend
             'accessKeyId' => 'ALTAKRRYcicQtl9pkL5ys4kJtm',
             'secretAccessKey' => '755757f6d135472e8dd24f5addc9b03b',
         ]);
-        $result = $bce->createBucket($randomStr);
+        $bce->deleteBucket('ctcnnopyevvnyljlgwli');
+        // $result = $bce->createBucket($randomStr);
         //dump($result);
         // $result = $bce->setBucketAcl($randomStr, 'public-read');
         // dump($result['data']);

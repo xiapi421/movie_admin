@@ -41,7 +41,7 @@ class Tongji extends Command
         foreach ($pays as $pay) {
             $pay->save([
                 'lastday_order'=>$pay['today_order'],
-                'lastday_money'=>$pay['lastday_money'],
+                'lastday_money'=>$pay['today_money'],
                 'today_order'=>0,
                 'today_money'=>0,
             ]);
