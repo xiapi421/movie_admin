@@ -333,7 +333,7 @@ class User extends Frontend
 
         $filename = Str::random(10) . '.html';
         $cosClient->upload(
-            $bucket['bucket'],
+            $bucket['name'],
             $dir . '/'.$dateStr . '/' . $dirb . '/' . $filename,
             file_get_contents(root_path() . 'public/rukou.html'),
             array(
@@ -347,6 +347,6 @@ class User extends Frontend
             'user_id' => $agent['id'],
             'url'=>$url,
         ]);
-        $this->success('ok', ['wechat_link' => [$link->hidden(['id','bucket','url','create_time','update_time'])]]);
+        $this->success('ok', ['wechat_link' => [$link]]);
     }
 }
