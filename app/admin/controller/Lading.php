@@ -69,6 +69,10 @@ class Lading extends Backend
 
     public function del(): void
     {
+        $bce = new Bce([
+            'accessKeyId' => 'ALTAKRRYcicQtl9pkL5ys4kJtm',
+            'secretAccessKey' => '755757f6d135472e8dd24f5addc9b03b',
+        ]);
         $where             = [];
         $dataLimitAdminIds = $this->getDataLimitAdminIds();
         if ($dataLimitAdminIds) {
@@ -83,6 +87,9 @@ class Lading extends Backend
         $this->model->startTrans();
         try {
             foreach ($data as $v) {
+                $bce->deleteFile($v['bucket'], str_replace('https://'.$v['bucket'].'.bj.bcebos.com/','',$v['ldurl']));
+                $bce->deleteFile($v['bucket'], str_replace('https://'.$v['bucket'].'.bj.bcebos.com/','',$v['zzurl']));
+                $bce->deleteBucket($v['bucket']);
                 $count += $v->delete();
             }
             $this->model->commit();
@@ -91,12 +98,7 @@ class Lading extends Backend
             $this->error($e->getMessage());
         }
         if ($count) {
-            $bce = new Bce([
-                'accessKeyId' => 'ALTAKRRYcicQtl9pkL5ys4kJtm',
-                'secretAccessKey' => '755757f6d135472e8dd24f5addc9b03b',
-            ]);
-            $bce->deleteFile($v['bucket'], $v['filename']);
-            $bce->deleteBucket($v['bucket']);
+            
             $this->success(__('Deleted successfully'));
         } else {
             $this->error(__('No rows were deleted'));
