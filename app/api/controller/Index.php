@@ -136,8 +136,9 @@ class Index extends Frontend
     public function getPaidVideos()
     {
         $id = $this->request->param('id');
-        $ip = $this->request->header('REMOTE-ADDR');
-        $paidVideo = Cache::store('redis')->handler()->lrange('single:' . $ip.':'.$id, 0, -1);
+        $ip = $this->request->header('REMOTE-ADDR');    
+        $codeInfo = json_decode(Cache::store('redis')->get('code:' . $id), true );
+        $paidVideo = Cache::store('redis')->handler()->lrange('single:' . $ip.':'.$codeInfo['user_id'], 0, -1);
         $data = Video::where('id', 'in', $paidVideo)->select()->toArray();
         $this->success('ok', $data);
     }
@@ -154,8 +155,9 @@ class Index extends Frontend
         $id = $this->request->param('id');
         $vid = $this->request->param('vid');
         $ip = $this->request->header('REMOTE-ADDR');
-        $paidVideos = Cache::store('redis')->handler()->lrange('single:' . $ip.':'.$id, 0, -1);
-        $isVip = Cache::store('redis')->get('term:' . $ip.':'.$id, 0);
+        $codeInfo = json_decode(Cache::store('redis')->get('code:' . $id), true );
+        $paidVideos = Cache::store('redis')->handler()->lrange('single:' . $ip.':'.$codeInfo['user_id'], 0, -1);
+        $isVip = Cache::store('redis')->get('term:' . $ip.':'.$codeInfo['user_id'], 0);
         $video = Db::name('videos')->where('id', $vid)->field('id,name,image,duration,views,url')->cache(true)->find();
         if ($isVip != 0) {
             $this->success('ok', ['video' => $video, 'isVip' => $isVip]);
