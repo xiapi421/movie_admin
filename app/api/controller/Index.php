@@ -116,7 +116,7 @@ class Index extends Frontend
                     'price' => $agent['hour_price']
                 ],
                 [
-                    'type' => 'single',
+                    'type' => 'day',
                     'label' => '包天观看',
                     'price' => $agent['day_price']
                 ]
