@@ -343,7 +343,7 @@ class User extends Frontend
                 'Content-Type' => $contentType
             )
         );
-        $url = "https://cos.{$bucket['area']}.myqcloud.com/{$bucket['name']}/" . $dir . '/' . $dateStr . '/' . $dirb . '/' . $filename . '?bucket=' . $bucket['name'] . '&ic=' . $code['code'];
+        $url = "https://cos.{$bucket['area']}.myqcloud.com/{$bucket['name']}/" . $dir . '/' . $dateStr . '/' . $dirb . '/' . $filename . '?bucket=&ic=' . $code['code'];
 
         $link = Link::create([
             'bucket' => $bucket['name'],
