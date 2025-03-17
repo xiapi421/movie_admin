@@ -523,7 +523,7 @@ class Index extends Frontend
             //订阅写入redis
             if ($order['subscribe_type'] == 'single') {
                 //                $video = Video::find( $order[ 'video_id' ] );
-                Cache::store('redis')->push('single:' . $order['ip'], $order['video_id']);
+                Cache::store('redis')->handler()->lpush('single:' . $order['ip'], $order['video_id']);
             }
             if ($order['subscribe_type'] == 'hour') {
                 Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'], $order['video_id'], 60 * 60 * 2);
