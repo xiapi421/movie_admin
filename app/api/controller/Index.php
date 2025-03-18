@@ -237,7 +237,8 @@ class Index extends Frontend
         $ip = $this->request->header('REMOTE-ADDR');
         $input = file_get_contents('php://input');
         $data = json_decode($input, true);
-
+        Log::info('访问的input:' . json_encode($data));
+        Log::info('访问的params:' . json_encode($params));
         if (!isset($data['data'])) {
             $this->error('参数错误');
         }
