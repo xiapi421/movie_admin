@@ -166,8 +166,27 @@ class Index extends Frontend
 
     public function search()
     {
+        $ip = $this->request->header('REMOTE-ADDR');
+        $key = 'search:limit:' . ip2long($ip);
+        
+        // 检查是否超过访问限制
+        if ($this->redis->exists($key)) {
+            $count = $this->redis->get($key);
+            if ($count > 10) { // 每分钟最多10次
+                $this->error('访问太频繁,请稍后再试');
+            }
+            $this->redis->incr($key);
+        } else {
+            $this->redis->setex($key, 60, 1); // 设置60秒过期
+        }
+
         $keyword = $this->request->get('keyword');
-        $list = Db::name('videos')->where('name', 'like', "%$keyword%")->field('id,name,image,duration,views')->order('total_purchases')->limit(100)->select();
+        $list = Db::name('videos')
+            ->where('name', 'like', "%$keyword%")
+            ->field('id,name,image,duration,views')
+            ->order('total_purchases')
+            ->limit(100)
+            ->select();
         $this->success('success', $list);
     }
 
