@@ -24,9 +24,40 @@ class User extends Frontend
 
     protected array $noNeedPermission = ['index'];
 
+    protected array $noNeedLimit = ['checkIn', 'logout', 'login', 'getAgentBySecret', 'info'];
+
+    protected $redis;
+
     public function initialize(): void
     {
         parent::initialize();
+        $this->redis= Cache::store('redis')->handler();    
+        // 检查访问频率限制
+        $action = $this->request->action();
+        if (!in_array($action, $this->noNeedLimit)) {
+            $this->checkRateLimit();
+        }
+    }
+
+    /**
+     * 检查访问频率限制
+     */
+    protected function checkRateLimit()
+    {
+        $userId = $this->auth->id;
+        $action = $this->request->action();
+        $key = 'rate:limit:user:' . $userId . ':' . $action;
+        
+        // 检查是否超过访问限制
+        if ($this->redis->exists($key)) {
+            $count = $this->redis->get($key);
+            if ($count > 20) { // 每分钟最多20次
+                $this->error('访问太频繁,请稍后再试');
+            }
+            $this->redis->incr($key);
+        } else {
+            $this->redis->setex($key, 60, 1); // 设置60秒过期
+        }
     }
 
     public function info()
