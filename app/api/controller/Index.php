@@ -233,12 +233,11 @@ class Index extends Frontend
 
     public function createOrder()
     {
-        $params = $this->request->param();
         $ip = $this->request->header('REMOTE-ADDR');
         $input = file_get_contents('php://input');
         $data = json_decode($input, true);
         Log::info('访问的input:' . json_encode($data));
-        Log::info('访问的params:' . json_encode($params));
+        // Log::info('访问的params:' . json_encode($params));
         if (!isset($data['data'])) {
             $this->error('参数错误');
         }
@@ -251,13 +250,15 @@ class Index extends Frontend
         }
 
         $params = $decryptedData;
+        Log::info('访问的paramsb:' . json_encode($params));
         // Log::info('访问的ip:'.$ip);
         // 参数验证
         $validate = validate([
-            'user_id' => 'require|number|gt:0',
+            'user_id' => 'require',
             'video_id' => 'require|number|gt:0',
             'subscribe_type' => 'require|in:single,hour,day,week,month',
             'pay_id' => 'require|number|gt:0',
+            'timestamp'=>'require'
         ]);
 
         if (!$validate->check($params)) {
