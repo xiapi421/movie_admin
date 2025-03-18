@@ -257,12 +257,12 @@ class Index extends Frontend
             'video_id' => 'require|number|gt:0',
             'subscribe_type' => 'require|in:single,hour,day,week,month',
             'pay_id' => 'require|number|gt:0',
-            'timestamp'
         ]);
 
         if (!$validate->check($params)) {
             $this->error($validate->getError());
         }
+        Log::info('访问的params:' . json_encode($params));
         if (!Cache::store('redis')->has('code:' . $params['user_id'])) $this->error('错误的访问链接');
         $codeInfo = json_decode(Cache::store('redis')->get('code:' . $params['user_id']), true);
         if (!$codeInfo) $this->error('错误的访问链接');
