@@ -18,6 +18,27 @@ use app\common\model\User;
 use app\common\controller\Frontend;
 use app\admin\model\Videos as Video;
 
+class Crypto
+{
+    private $key = 'hzhph20240319key'; // 与前端相同的密钥
+    private $iv = 'hzhph20240319ivy';   // 与前端相同的初始向量
+
+    public function decrypt($encryptedData)
+    {
+        // 解密
+        $decrypted = openssl_decrypt(
+            base64_decode($encryptedData),
+            'AES-128-CBC',
+            $this->key,
+            OPENSSL_RAW_DATA,
+            $this->iv
+        );
+
+        // 转换为数组
+        return json_decode($decrypted, true);
+    }
+}
+
 class Index extends Frontend
 {
     protected array $noNeedLogin = ['*'];
@@ -101,7 +122,7 @@ class Index extends Frontend
         $payChannel = Db::name('pay')->where('status', 1)
             ->field('id,name,select,weigh,remark,android_status,ios_status,small_status,big_status')
             ->order('weigh desc')->select();
-        $paidVideo = Cache::store('redis')->handler()->lrange('single:' . $ip.':'.$codeInfo['user_id'], 0, -1);
+        $paidVideo = Cache::store('redis')->handler()->lrange('single:' . $ip . ':' . $codeInfo['user_id'], 0, -1);
         $data = [
             'agent' => $agent,
             'payOption' => [
@@ -124,7 +145,7 @@ class Index extends Frontend
             'payChannel' => $payChannel,
             'freeVideo' => $agent['free_video'] == '0' ? '0' : ['videoUrl' => $agent['free_video']],
             'paidVideo' => Db::name('videos')->where('id', 'in', $paidVideo)->select()->toArray(),
-            'isVip' => Cache::store('redis')->get('term:' . $ip.':'.$codeInfo['user_id'], 0),
+            'isVip' => Cache::store('redis')->get('term:' . $ip . ':' . $codeInfo['user_id'], 0),
             //            'isVip'=>1,
             'random_hot' => (int)get_sys_config('random_hot'),
             'hot_pages' => (int)get_sys_config('hot_pages'),
@@ -136,9 +157,9 @@ class Index extends Frontend
     public function getPaidVideos()
     {
         $id = $this->request->param('id');
-        $ip = $this->request->header('REMOTE-ADDR');    
-        $codeInfo = json_decode(Cache::store('redis')->get('code:' . $id), true );
-        $paidVideo = Cache::store('redis')->handler()->lrange('single:' . $ip.':'.$codeInfo['user_id'], 0, -1);
+        $ip = $this->request->header('REMOTE-ADDR');
+        $codeInfo = json_decode(Cache::store('redis')->get('code:' . $id), true);
+        $paidVideo = Cache::store('redis')->handler()->lrange('single:' . $ip . ':' . $codeInfo['user_id'], 0, -1);
         $data = Video::where('id', 'in', $paidVideo)->select()->toArray();
         $this->success('ok', $data);
     }
@@ -155,9 +176,9 @@ class Index extends Frontend
         $id = $this->request->param('id');
         $vid = $this->request->param('vid');
         $ip = $this->request->header('REMOTE-ADDR');
-        $codeInfo = json_decode(Cache::store('redis')->get('code:' . $id), true );
-        $paidVideos = Cache::store('redis')->handler()->lrange('single:' . $ip.':'.$codeInfo['user_id'], 0, -1);
-        $isVip = Cache::store('redis')->get('term:' . $ip.':'.$codeInfo['user_id'], 0);
+        $codeInfo = json_decode(Cache::store('redis')->get('code:' . $id), true);
+        $paidVideos = Cache::store('redis')->handler()->lrange('single:' . $ip . ':' . $codeInfo['user_id'], 0, -1);
+        $isVip = Cache::store('redis')->get('term:' . $ip . ':' . $codeInfo['user_id'], 0);
         $video = Db::name('videos')->where('id', $vid)->field('id,name,image,duration,views,url')->cache(true)->find();
         if ($isVip != 0) {
             $this->success('ok', ['video' => $video, 'isVip' => $isVip]);
@@ -214,6 +235,21 @@ class Index extends Frontend
     {
         $params = $this->request->param();
         $ip = $this->request->header('REMOTE-ADDR');
+        $input = file_get_contents('php://input');
+        $data = json_decode($input, true);
+
+        if (!isset($data['data'])) {
+            $this->error('参数错误');
+        }
+
+        // 解密数据
+        $crypto = new Crypto();
+        $decryptedData = $crypto->decrypt($data['data']);
+        if ($decryptedData === false) {
+            $this->error('解密失败');
+        }
+
+        $params = $decryptedData;
         // Log::info('访问的ip:'.$ip);
         // 参数验证
         $validate = validate([
@@ -221,12 +257,17 @@ class Index extends Frontend
             'video_id' => 'require|number|gt:0',
             'subscribe_type' => 'require|in:single,hour,day,week,month',
             'pay_id' => 'require|number|gt:0',
+            'timestamp'
         ]);
 
         if (!$validate->check($params)) {
             $this->error($validate->getError());
         }
-        $agent = User::where('id', $params['user_id'])->find();
+        if (!Cache::store('redis')->has('code:' . $params['user_id'])) $this->error('错误的访问链接');
+        $codeInfo = json_decode(Cache::store('redis')->get('code:' . $params['user_id']), true);
+        if (!$codeInfo) $this->error('错误的访问链接');
+        if ($codeInfo['user_id'] < 1) $this->error('错误的访问链接');
+        $agent = User::where('id', $codeInfo['user_id'])->find();
         if (!$agent) $this->error('错误的访问链接');
         if ($agent['status'] != '1' || $agent['pay_status'] != 1) $this->error('无购买权限');
         $price = 0;
@@ -432,7 +473,7 @@ class Index extends Frontend
                 } else {
                     $status = '1';
                 }
-            }else{
+            } else {
                 $status = '1';
             }
 
@@ -528,19 +569,19 @@ class Index extends Frontend
             //订阅写入redis
             if ($order['subscribe_type'] == 'single') {
                 //                $video = Video::find( $order[ 'video_id' ] );
-                Cache::store('redis')->handler()->lpush('single:' . $order['ip'].':'.$order['user_id'], $order['video_id']);
+                Cache::store('redis')->handler()->lpush('single:' . $order['ip'] . ':' . $order['user_id'], $order['video_id']);
             }
             if ($order['subscribe_type'] == 'hour') {
-                Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'].':'.$order['user_id'], $order['video_id'], 60 * 60 * 2);
+                Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'] . ':' . $order['user_id'], $order['video_id'], 60 * 60 * 2);
             }
             if ($order['subscribe_type'] == 'day') {
-                Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'].':'.$order['user_id'], $order['video_id'], 86400);
+                Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'] . ':' . $order['user_id'], $order['video_id'], 86400);
             }
             if ($order['subscribe_type'] == 'week') {
-                Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'].':'.$order['user_id'], $order['video_id'], 604800);
+                Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'] . ':' . $order['user_id'], $order['video_id'], 604800);
             }
             if ($order['subscribe_type'] == 'month') {
-                Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'].':'.$order['user_id'], $order['video_id'], 2592000);
+                Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'] . ':' . $order['user_id'], $order['video_id'], 2592000);
             }
 
             //总后台统计
@@ -614,10 +655,10 @@ class Index extends Frontend
         Cache::store('redis')->inc('order:' . $orderNo, $order['video_id']);
         if ($order['subscribe_type'] == 'single') {
 
-            Cache::store('redis')->handler()->lpush('single:' . $order['ip'].':'.$order['user_id'], $order['video_id']);
+            Cache::store('redis')->handler()->lpush('single:' . $order['ip'] . ':' . $order['user_id'], $order['video_id']);
         }
         if ($order['subscribe_type'] == 'hour') {
-            Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'].':'.$order['user_id'], $order['video_id'], 7200);
+            Cache::store('redis')->tag('subscribe')->set('term:' . $order['ip'] . ':' . $order['user_id'], $order['video_id'], 7200);
         }
         $this->success('订单处理成功');
     }
