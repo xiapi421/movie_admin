@@ -299,7 +299,7 @@ class Index extends Frontend
             $orderData = [
                 'order_sn' => $this->generateOrderSn(),
                 'ip' => $ip,
-                'user_id' => $params['user_id'],
+                'user_id' => $agent['id'],
                 'video_id' => $params['video_id'],
                 'subscribe_type' => $params['subscribe_type'],
                 'pay_id' => $params['pay_id'],
