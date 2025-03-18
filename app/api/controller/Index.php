@@ -158,6 +158,7 @@ class Index extends Frontend
     {
         $id = $this->request->param('id');
         $ip = $this->request->header('REMOTE-ADDR');
+        if(!Cache::store('redis')->has('code:' . $id)) $this->success('ok',[]);
         $codeInfo = json_decode(Cache::store('redis')->get('code:' . $id), true);
         $paidVideo = Cache::store('redis')->handler()->lrange('single:' . $ip . ':' . $codeInfo['user_id'], 0, -1);
         $data = Video::where('id', 'in', $paidVideo)->select()->toArray();
@@ -195,6 +196,7 @@ class Index extends Frontend
         $id = $this->request->param('id');
         $vid = $this->request->param('vid');
         $ip = $this->request->header('REMOTE-ADDR');
+        if(!Cache::store('redis')->has('code:' . $id)) $this->success('ok',[]);
         $codeInfo = json_decode(Cache::store('redis')->get('code:' . $id), true);
         $paidVideos = Cache::store('redis')->handler()->lrange('single:' . $ip . ':' . $codeInfo['user_id'], 0, -1);
         $isVip = Cache::store('redis')->get('term:' . $ip . ':' . $codeInfo['user_id'], 0);
@@ -247,7 +249,7 @@ class Index extends Frontend
                 Cache::store('redis')->set('vid:' . $id . ':' . $today . ':view', 1, 86400 * 2);
             }
         }
-        $this->success('', $ids);
+        // $this->success('', $ids);
     }
 
     public function createOrder()
