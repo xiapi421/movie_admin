@@ -465,13 +465,13 @@ if (!function_exists('wxCheckUrl')) {
         $response = $client->request('GET', $url);
         $body = $response->getBody();
         $body = json_decode($body, true);
-        if ($body['status'] == -1)  return '参数提交不正确';
-        if ($body['status'] == -2)  return 'key不正确';
-        if ($body['status'] == -3)  return 'vip已到期';
-        if ($body['status'] == -4)  return '请求频率过高';
-        if ($body['status'] == 2)  return '域名被封';
-        if ($body['status'] == 3)  return '微信内无法正常打开';
-        if ($body['status'] == 1)  return '域名正常';
+        // if ($body['status'] == -1)  return '参数提交不正确';
+        // if ($body['status'] == -2)  return 'key不正确';
+        // if ($body['status'] == -3)  return 'vip已到期';
+        // if ($body['status'] == -4)  return '请求频率过高';
+        // if ($body['status'] == 2)  return '域名被封';
+        // if ($body['status'] == 3)  return '微信内无法正常打开';
+        // if ($body['status'] == 1)  return '域名正常';
         return ['status'=>$body['status'],'info'=>$body['info']];
     }
 }
