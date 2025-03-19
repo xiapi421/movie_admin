@@ -120,10 +120,12 @@ class Bucket extends Backend
         $buckets = $this->model->where('area', 'bj')->select();
         $result = [];   
         foreach ($buckets as $bucket) {
-            $url = urldecode($bucket['url']);
+            
+            $url = urlencode($bucket['url']);
+            // $this->success($url, $result);
             $info = wxCheckUrl($url);
             if($info['status']!=1){
-               $result[] = ['id' => $bucket['id'],'url' => $url, 'status' => $info['status'],'info'=>$info['info']];
+               $result[] = ['id' => $bucket['id'],'url' => $url, 'status' => $bucket['user_id'],'info'=>$info['info']];
             }
         }
         $this->success('ok', $result);
@@ -135,7 +137,7 @@ class Bucket extends Backend
         $ids = explode(',', $ids);
         $buckets = $this->model->where('id', 'in', $ids)->select();
         foreach ($buckets as $bucket) {
-            BaiduyunModel::where('id', $bucket['baiduyun_id'])->setDec('used',1);
+            BaiduyunModel::where('apiKey', $bucket['apiKey'])->setDec('used',1);
             $bce = new Bce([
                 'accessKeyId' => $bucket['apiKey'],
                 'secretAccessKey' => $bucket['secret'],

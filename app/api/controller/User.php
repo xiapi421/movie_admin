@@ -421,6 +421,7 @@ class User extends Frontend
                 'filename'=>$filename,
                 'category' => '百度',
                 'url'=>$url,
+                'user_id'=>$agent['id'],
                 'status' => 1,
             ]);
             $link = Link::create([
