@@ -437,10 +437,11 @@ class User extends Frontend
         // $urls = explode("\n", $urls);
         $result = [];
         foreach ($urls as $url) {
+            $url =html_entity_decode($url);
             $url =urlencode($url);
             $res= wxCheckUrl($url);
-            $result[] = ['url' => urldecode(urldecode($url)), 'status' =>$res['status'],'info'=>$res['info']];
+            $result[] = ['url' => urldecode($url), 'status' =>$res['status'],'info'=>$res['info']];
         }
-        $this->success('ok', $result);
+        $this->success($url, $result);
     }
 }
