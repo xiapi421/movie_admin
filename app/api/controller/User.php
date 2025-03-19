@@ -420,6 +420,7 @@ class User extends Frontend
                 'secret' => $baiduyun['secret'],
                 'filename'=>$filename,
                 'category' => '百度',
+                'url'=>$url,
                 'status' => 1,
             ]);
             $link = Link::create([

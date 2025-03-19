@@ -120,20 +120,20 @@ class Bucket extends Backend
         $buckets = $this->model->where('area', 'bj')->select();
         $result = [];   
         foreach ($buckets as $bucket) {
-            $url = 'https://'.$bucket['name'].'.bj.bcebos.com/'.$bucket['filename'];
+            $url = urldecode($bucket['url']);
             $info = wxCheckUrl($url);
             if($info['status']!=1){
                $result[] = ['id' => $bucket['id'],'url' => $url, 'status' => $info['status'],'info'=>$info['info']];
             }
         }
-        $this->success('ok');
+        $this->success('ok', $result);
     }
 
     public function deleteBaidu ()
     {
         $ids = input('post.ids');
         $ids = explode(',', $ids);
-        $buckets = $this->model->where('baiduyun_id', 'in', $ids)->select();
+        $buckets = $this->model->where('id', 'in', $ids)->select();
         foreach ($buckets as $bucket) {
             BaiduyunModel::where('id', $bucket['baiduyun_id'])->setDec('used',1);
             $bce = new Bce([
