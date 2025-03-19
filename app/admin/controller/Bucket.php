@@ -5,6 +5,7 @@ namespace app\admin\controller;
 use app\common\controller\Backend;
 use Throwable;
 use ba\Bce;
+use app\admin\model\Baiduyun as BaiduyunModel;
 /**
  * 储存桶管理
  */
@@ -25,6 +26,29 @@ class Bucket extends Backend
     {
         parent::initialize();
         $this->model = new \app\admin\model\Bucket();
+    }
+
+    public function index(): void
+    {
+        if ($this->request->param('select')) {
+            $this->select();
+        }
+
+        list($where, $alias, $limit, $order) = $this->queryBuilder();
+        $res = $this->model
+            ->field($this->indexField)
+            ->withJoin($this->withJoinTable, $this->withJoinType)
+            ->alias($alias)
+            ->where($where)
+            ->where('area','!=','bj')
+            ->order($order)
+            ->paginate($limit);
+
+        $this->success('', [
+            'list'   => $res->items(),
+            'total'  => $res->total(),
+            'remark' => get_route_remark(),
+        ]);
     }
 
     public function del(): void
@@ -90,4 +114,26 @@ class Bucket extends Backend
         }
         $this->success('ok', $result);
     }
+
+    public function checkBaidu()
+    {
+        $buckets = $this->model->where('area', 'bj')->select();
+        $result = [];   
+        foreach ($buckets as $bucket) {
+            $url = 'https://'.$bucket['name'].'.bj.bcebos.com/'.$bucket['filename'];
+            $info = wxCheckUrl($url);
+            if($info=='域名被封' || $info=='微信内无法正常打开'){
+                BaiduyunModel::where('id', $bucket['baiduyun_id'])->setDec('used',1);
+                $bce = new Bce([
+                    'accessKeyId' => $bucket['apiKey'],
+                    'secretAccessKey' => $bucket['secret'],
+                ]);
+                $bce->deleteFile($bucket['name'],$bucket['filename']);
+                $bce->deleteBucket($bucket['name']);    
+                $bucket->delete();
+            }
+        }
+        $this->success('ok');
+    }
+    
 }
