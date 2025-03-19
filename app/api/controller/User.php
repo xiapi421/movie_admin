@@ -395,9 +395,10 @@ class User extends Frontend
         }
 
         if($method == '2'){
+            $bucket_ids = BaiduyunModel::where('used', '<',100)->column('id');
+            $bucket_id = $bucket_ids[array_rand($bucket_ids)];
             //百度
-            $baiduyun = BaiduyunModel::where('id', '>',0)->find();
-            // Log::info(json_encode($baiduyun));
+            $baiduyun = BaiduyunModel::where('id', $bucket_id)->find();
             $bucketName =Str::lower( Str::random(20));
             $filename = Str::lower( Str::random(20)).'.html';
             $bce = new Bce([
