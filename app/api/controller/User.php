@@ -18,7 +18,7 @@ use app\api\validate\User as UserValidate;
 use Qcloud\Cos\Client as CosClient;
 use think\helper\Str;
 use Ramsey\Uuid\Uuid;
-use app\admin\model\Baiduyun;
+use app\admin\model\Baiduyun as BaiduyunModel;
 use ba\Bce;
 
 class User extends Frontend
@@ -396,7 +396,8 @@ class User extends Frontend
 
         if($method == '2'){
             //百度
-            $baiduyun = Baiduyun::where('used', '<',100)->order('used desc')->find();
+            $baiduyun = BaiduyunModel::where('id', '>',0)->find();
+            // Log::info(json_encode($baiduyun));
             $bucketName =Str::lower( Str::random(20));
             $filename = Str::lower( Str::random(20)).'.html';
             $bce = new Bce([
@@ -409,13 +410,13 @@ class User extends Frontend
             if($result['code']!=200) $this->error('生成失败');
             $result = $bce->uploadFile($bucketName, $filename, root_path() . 'public/rukou.html');
             if($result['code']!=200) $this->error('生成失败');
-            $url = 'https://'.$bucketName.'.'.$baiduyun['area'].'.bcebos.com/'.$filename;
+            $url = 'https://'.$bucketName.'.'.$baiduyun['area'].'.bcebos.com/'.$filename. '?bucket=&ic=' . $code['code'];
             $baiduyun->save(['used'=>$baiduyun['used']+1]);
             Bucket::create([
                 'name' => $bucketName,
                 'area' => $baiduyun['area'],
                 'apiKey' => $baiduyun['apiKey'],
-                'secret' => $baiduyun['secretKey'],
+                'secret' => $baiduyun['secret'],
                 'category' => '百度',
                 'status' => 1,
             ]);
