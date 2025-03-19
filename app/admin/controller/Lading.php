@@ -59,8 +59,8 @@ class Lading extends Backend
             ]);
             // Db::name('config')->where('name','zzurl')->update(['value'=>$zzurl]);
             // Db::name('config')->where('name','ldurl')->update(['value'=>$ldurl]);
-            Cache::set('zzurl',$zzurl);
-            Cache::set('ldurl',$ldurl);
+            Cache::store('redis')->set('zzurl',$zzurl);
+            Cache::store('redis')->set('ldurl',$ldurl);
             $this->success('生成成功',  ['bucketName' => $bucketName, 'ldurl' => $ldurl, 'zzurl' => $zzurl]);
         }else{
             $this->error('生成失败');
