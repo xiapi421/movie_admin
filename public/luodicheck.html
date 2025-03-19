@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div style="width:100vh;height: 100vh;display: flex;justify-content: center;align-items: center;">
+        
+    </div>
+    <script>
+        let timer = null;
+        timer = setInterval(() => {
+            fetch('http://api.jnoo.com/api/index/luodiStatus')
+            .then(res => res.json())
+        .then(res => {
+            if(res.code == 1){
+                document.querySelector('div').style.backgroundColor = 'green';
+            }else{
+                    document.querySelector('div').style.backgroundColor = 'red';
+                }
+            })
+        }, 5000);
+    </script>
+</body>
+</html>

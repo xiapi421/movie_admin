@@ -718,4 +718,15 @@ class Index extends Frontend
         $order_sn = $order_id_main . str_pad((100 - $order_id_sum % 100) % 100, 2, '0', STR_PAD_LEFT);
         return $order_sn;
     }
+
+    public function luodiStatus(){
+        $ldurl = Cache::store('redis')->get('ldurl');
+        if(!$ldurl) $this->error('中转地址不存在');
+        $res = wxCheckUrl($ldurl);
+        if($res['status'] == 1){
+            $this->success('中转地址正常');
+        }else{
+            $this->error('中转地址异常');
+        }
+    }
 }
