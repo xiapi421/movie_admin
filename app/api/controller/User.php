@@ -391,7 +391,7 @@ class User extends Frontend
             $link = Link::create([
                 'bucket' => $bucket['name'],
                 'user_id' => $agent['id'],
-                'url' => $url,
+                'url' => urlencode($url),
             ]);
             $this->success('ok', ['wechat_links' => [$link]]);
         }
@@ -429,7 +429,7 @@ class User extends Frontend
             $link = Link::create([
                 'bucket' => $bucketName,
                 'user_id' => $agent['id'],
-                'url' => $url,
+                'url' => urlencode($url),
             ]);
             $this->success('ok', ['wechat_links' => [$link]]);
         }
