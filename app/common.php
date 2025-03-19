@@ -12,6 +12,7 @@ use voku\helper\AntiXSS;
 use app\admin\model\Config as configModel;
 use think\exception\HttpResponseException;
 use Symfony\Component\HttpFoundation\IpUtils;
+use GuzzleHttp\Client;
 
 if (!function_exists('__')) {
 
@@ -453,5 +454,24 @@ if (!function_exists('keys_to_camel_case')) {
             }
         }
         return $result;
+    }
+}
+
+if (!function_exists('wxCheckUrl')) {
+    function wxCheckUrl($url)
+    {
+        $url = 'http://wxapibxz.jnoo.com/api/wxapijnoo4306/c5427e3b7d68acac6bcff6188a00166b?domain='.$url;
+        $client = new Client();
+        $response = $client->request('GET', $url);
+        $body = $response->getBody();
+        $body = json_decode($body, true);
+        if ($body['status'] == -1)  return '参数提交不正确';
+        if ($body['status'] == -2)  return 'key不正确';
+        if ($body['status'] == -3)  return 'vip已到期';
+        if ($body['status'] == -4)  return '请求频率过高';
+        if ($body['status'] == 2)  return '域名被封';
+        if ($body['status'] == 3)  return '微信内无法正常打开';
+        if ($body['status'] == 1)  return '域名正常';
+        return $body['info'];
     }
 }

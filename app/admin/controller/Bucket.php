@@ -30,4 +30,28 @@ class Bucket extends Backend
     /**
      * 若需重写查看、编辑、删除等方法，请复制 @see \app\admin\library\traits\Backend 中对应的方法至此进行重写
      */
+
+
+    public function checkUrl()
+    {
+        $ids = input('post.urls');
+        $ids = explode(',', $ids);
+        $buckets = $this->model->where('id', 'in', $ids)->select();
+        $result = [];
+        foreach ($buckets as $bucket) {
+            if($bucket['area']=='bj'){
+                $url = 'https://'.$bucket['name'].'.bj.bcebos.com';
+            }else{
+                $url = 'https://'.$bucket['area'].'.myqcloud.com/'.$bucket['name'];
+            }
+            $info = wxCheckUrl($url);
+            $result[] = ['id' => $bucket['id'],'url' => $url, 'status' => $info];
+            // if($info=='域名正常'){
+            //     $result[] = ['id' => $bucket['id'],'url' => $url, 'status' => 1];
+            // }else{
+            //     $result[] = ['id' => $bucket['id'],'url' => $url, 'status' => 0];
+            // }
+        }
+        $this->success('ok', $result);
+    }
 }

@@ -418,6 +418,7 @@ class User extends Frontend
                 'area' => $baiduyun['area'],
                 'apiKey' => $baiduyun['apiKey'],
                 'secret' => $baiduyun['secret'],
+                'filename'=>$filename,
                 'category' => '百度',
                 'status' => 1,
             ]);
@@ -428,5 +429,16 @@ class User extends Frontend
             ]);
             $this->success('ok', ['wechat_links' => [$link]]);
         }
+    }
+
+    public function checkLinks(){
+        $urls= $this->request->param('urls');
+        //分割文本一行一个
+        // $urls = explode("\n", $urls);
+        $result = [];
+        foreach ($urls as $url) {
+            $result[] = ['url' => $url, 'status' => wxCheckUrl($url)];
+        }
+        $this->success('ok', $result);
     }
 }
