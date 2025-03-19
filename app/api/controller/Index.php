@@ -360,7 +360,7 @@ class Index extends Frontend
         );
         Log::info('创建订单参数:' . json_encode($parameter));
         $epay = new EpayCore($epay_config);
-        $html_text = $epay->apiPay($parameter);
+        $html_text['payurl'] = $epay->getPayLink($parameter);
         Log::info('创建订单返回结果:' . json_encode($html_text));
         if (isset($html_text['payurl'])) {
             Cache::store('redis')->set('order:' . $orderData['order_sn'], 0, 60 * 5);
@@ -369,7 +369,7 @@ class Index extends Frontend
                 'payurl' => $html_text['payurl'],
             ]);
         } else {
-            $html_text = $epay->apiPay($parameter);
+            $html_text['payurl'] = $epay->getPayLink($parameter);
             if (isset($html_text['payurl'])) {
                 Cache::store('redis')->set('order:' . $orderData['order_sn'], 0, 60 * 5);
                 $this->success('创建订单成功', [
