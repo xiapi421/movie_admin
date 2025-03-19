@@ -105,7 +105,7 @@ class Bucket extends Backend
                 $url = 'https://'.$bucket['area'].'.myqcloud.com/'.$bucket['name'];
             }
             $info = wxCheckUrl($url);
-            $result[] = ['id' => $bucket['id'],'url' => $url, 'status' => $info];
+            $result[] = ['id' => $bucket['id'],'url' => $url, 'status' => $info['status'],'info'=>$info['info']];
             // if($info=='域名正常'){
             //     $result[] = ['id' => $bucket['id'],'url' => $url, 'status' => 1];
             // }else{
@@ -122,8 +122,8 @@ class Bucket extends Backend
         foreach ($buckets as $bucket) {
             $url = 'https://'.$bucket['name'].'.bj.bcebos.com/'.$bucket['filename'];
             $info = wxCheckUrl($url);
-            if($info=='域名被封' || $info=='微信内无法正常打开'){
-               $result[] = ['id' => $bucket['id'],'url' => $url, 'status' => 0];
+            if($info['status']!=1){
+               $result[] = ['id' => $bucket['id'],'url' => $url, 'status' => $info['status'],'info'=>$info['info']];
             }
         }
         $this->success('ok');
