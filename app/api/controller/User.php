@@ -439,7 +439,7 @@ class User extends Frontend
         foreach ($urls as $url) {
             $url =urlencode($url);
             $res= wxCheckUrl($url);
-            $result[] = ['url' => urldecode($url), 'status' =>$res['status'],'info'=>$res['info']];
+            $result[] = ['url' => urldecode(urldecode($url)), 'status' =>$res['status'],'info'=>$res['info']];
         }
         $this->success('ok', $result);
     }
