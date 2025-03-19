@@ -437,6 +437,7 @@ class User extends Frontend
         // $urls = explode("\n", $urls);
         $result = [];
         foreach ($urls as $url) {
+            $url =urlencode($url);
             $res= wxCheckUrl($url);
             $result[] = ['url' => $url, 'status' =>$res['status'],'info'=>$res['info']];
         }
