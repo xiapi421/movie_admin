@@ -12,7 +12,7 @@
     <script>
         let timer = null;
         timer = setInterval(() => {
-            fetch('http://api.jnoo.com/api/index/luodiStatus')
+            fetch('https://cloud.hzhph.com/index.php/api/index/luodiStatus')
             .then(res => res.json())
         .then(res => {
             if(res.code == 1){
