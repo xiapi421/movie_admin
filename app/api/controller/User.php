@@ -16,11 +16,14 @@ use app\common\facade\Token;
 use app\common\controller\Frontend;
 use app\api\validate\User as UserValidate;
 use Qcloud\Cos\Client as CosClient;
-use think\helper\Str;   
+use think\helper\Str;
 use Ramsey\Uuid\Uuid;
+use app\admin\model\Baiduyun;
+use ba\Bce;
+
 class User extends Frontend
 {
-    protected array $noNeedLogin = ['checkIn', 'logout', 'login', 'getAgentBySecret', 'info'];
+    protected array $noNeedLogin = ['checkIn', 'logout', 'login', 'getAgentBySecret', 'info', 'addLink'];
 
     protected array $noNeedPermission = ['index'];
 
@@ -31,7 +34,7 @@ class User extends Frontend
     public function initialize(): void
     {
         parent::initialize();
-        $this->redis= Cache::store('redis')->handler();    
+        $this->redis = Cache::store('redis')->handler();
         // 检查访问频率限制
         $action = $this->request->action();
         if (!in_array($action, $this->noNeedLimit)) {
@@ -47,7 +50,7 @@ class User extends Frontend
         $userId = $this->auth->id;
         $action = $this->request->action();
         $key = 'rate:limit:user:' . $userId . ':' . $action;
-        
+
         // 检查是否超过访问限制
         if ($this->redis->exists($key)) {
             $count = $this->redis->get($key);
@@ -341,49 +344,87 @@ class User extends Frontend
     public function addLink()
     {
         $agent = $this->auth->getUser();
+        $entry_method = get_sys_config('entry_method');
         //限制每天生成100个
         $today_count = Link::where('user_id', $agent['id'])->where('create_time', '>=', strtotime('today 00:00:00'))->count();
         if ($today_count >= 100) $this->error('每天最多只能生成100个链接');
         $code = Code::where('user_id', $agent['id'])->where('status', 1)->find();
-        if(!$code) $this->error('请先创建一个推广码');
-        //随机取一个桶
-        $bucket_ids = Bucket::where('status', '1')->column('id');
-        $bucket_id = $bucket_ids[array_rand($bucket_ids)];
-        $bucket = Bucket::where('id', $bucket_id)->find();
-        $cosClient = new CosClient(
-            array(
-                'region' => $bucket['area'],
-                'scheme' => 'https', //协议头部，默认为 http
-                'credentials' => array(
-                    'secretId'  => $bucket['apiKey'],
-                    'secretKey' => $bucket['secret']
+        if (!$code) $this->error('请先创建一个推广码');
+
+        $method = $entry_method[array_rand($entry_method)];
+        if ($method == '1') {
+            //腾讯
+            $bucket_ids = Bucket::where('status', '1')->where('category', 'like', '%腾讯%')->column('id');
+            $bucket_id = $bucket_ids[array_rand($bucket_ids)];
+            $bucket = Bucket::where('id', $bucket_id)->find();
+            $cosClient = new CosClient(
+                array(
+                    'region' => $bucket['area'],
+                    'scheme' => 'https', //协议头部，默认为 http
+                    'credentials' => array(
+                        'secretId'  => $bucket['apiKey'],
+                        'secretKey' => $bucket['secret']
+                    )
                 )
-            )
-        );
-        //随机目录名+随机文件名.html
-        //设置文件的content-type
-        $contentType = 'text/html';
-        $uuid = Uuid::uuid4()->toString();
-        $dir = Str::random(10);
-        $dateStr = date('Ymd');
-        $dirb = Str::random(10);
+            );
+            //随机目录名+随机文件名.html
+            //设置文件的content-type
+            $contentType = 'text/html';
+            $uuid = Uuid::uuid4()->toString();
+            $dir = Str::random(10);
+            $dateStr = date('Ymd');
+            $dirb = Str::random(10);
 
-        $filename = Str::random(10) . '.html';
-        $cosClient->upload(
-            $bucket['name'],
-            $dir . '/'.$dateStr . '/' . $dirb . '/' . $filename,
-            file_get_contents(root_path() . 'public/rukou.html'),
-            array(
-                'Content-Type' => $contentType
-            )
-        );
-        $url = "https://cos.{$bucket['area']}.myqcloud.com/{$bucket['name']}/" . $dir . '/' . $dateStr . '/' . $dirb . '/' . $filename . '?bucket=&ic=' . $code['code'];
+            $filename = Str::random(10) . '.html';
+            $cosClient->upload(
+                $bucket['name'],
+                $dir . '/' . $dateStr . '/' . $dirb . '/' . $filename,
+                file_get_contents(root_path() . 'public/rukou.html'),
+                array(
+                    'Content-Type' => $contentType
+                )
+            );
+            $url = "https://cos.{$bucket['area']}.myqcloud.com/{$bucket['name']}/" . $dir . '/' . $dateStr . '/' . $dirb . '/' . $filename . '?bucket=&ic=' . $code['code'];
 
-        $link = Link::create([
-            'bucket' => $bucket['name'],
-            'user_id' => $agent['id'],
-            'url'=>$url,
-        ]);
-        $this->success('ok', ['wechat_links' => [$link]]);
+            $link = Link::create([
+                'bucket' => $bucket['name'],
+                'user_id' => $agent['id'],
+                'url' => $url,
+            ]);
+            $this->success('ok', ['wechat_links' => [$link]]);
+        }
+
+        if($method == '2'){
+            //百度
+            $baiduyun = Baiduyun::where('used', '<',100)->order('used desc')->find();
+            $bucketName =Str::lower( Str::random(20));
+            $filename = Str::lower( Str::random(20)).'.html';
+            $bce = new Bce([
+                'accessKeyId' => $baiduyun['apiKey'],
+                'secretAccessKey' => $baiduyun['secretKey'],
+            ]);
+            $result = $bce->createBucket($bucketName);
+            if($result['code']!=200) $this->error('生成失败');
+            $result = $bce->setBucketAcl($bucketName, 'public-read');
+            if($result['code']!=200) $this->error('生成失败');
+            $result = $bce->uploadFile($bucketName, $filename, root_path() . 'public/rukou.html');
+            if($result['code']!=200) $this->error('生成失败');
+            $url = 'https://'.$bucketName.'.'.$baiduyun['area'].'.bcebos.com/'.$filename;
+            $baiduyun->save(['used'=>$baiduyun['used']+1]);
+            Bucket::create([
+                'name' => $bucketName,
+                'area' => $baiduyun['area'],
+                'apiKey' => $baiduyun['apiKey'],
+                'secret' => $baiduyun['secretKey'],
+                'category' => '百度',
+                'status' => 1,
+            ]);
+            $link = Link::create([
+                'bucket' => $bucketName,
+                'user_id' => $agent['id'],
+                'url' => $url,
+            ]);
+            $this->success('ok', ['wechat_links' => [$link]]);
+        }
     }
 }
