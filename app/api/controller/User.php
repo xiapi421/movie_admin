@@ -337,7 +337,7 @@ class User extends Frontend
     public function getLink()
     {
         $agent = $this->auth->getUser();
-        $links = Link::where('user_id', $agent['id'])->order('id', 'desc')->field('id,url')->limit(10)->select();
+        $links = Link::where('user_id', $agent['id'])->order('id', 'desc')->field('id,url,create_time')->limit(20)->select();
         $this->success('', ['wechat_links' => $links,'free_video'=>$agent['free_video']]);
     }
 
