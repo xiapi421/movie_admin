@@ -1,27 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Document</title>
-</head>
-<body>
-    <div style="width:100vh;height: 100vh;display: flex;justify-content: center;align-items: center;">
-        
-    </div>
+  </head>
+  <style>
+    *{
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+  </style>
+  <body>
+    <div
+      style="
+        width: 100vh;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      "
+    ></div>
     <script>
-        let timer = null;
-        timer = setInterval(() => {
-            fetch('https://cloud.hzhph.com/index.php/api/index/luodiStatus')
-            .then(res => res.json())
-        .then(res => {
-            if(res.code == 1){
-                document.querySelector('div').style.backgroundColor = 'green';
-            }else{
-                    document.querySelector('div').style.backgroundColor = 'red';
-                }
-            })
-        }, 10000);
+      let timer = null;
+      timer = setInterval(() => {
+        fetch("https://cloud.hzhph.com/index.php/api/index/luodiStatus")
+          .then((res) => res.json())
+          .then((res) => {
+            if (res.code == 1) {
+              document.querySelector("div").style.backgroundColor = "green";
+            } else {
+              document.querySelector("div").style.backgroundColor = "red";
+            }
+          });
+      }, 10000);
     </script>
-</body>
+  </body>
 </html>

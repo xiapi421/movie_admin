@@ -121,17 +121,19 @@ class User extends Frontend
     {
         $agent = $this->auth->getUserInfo();
         $notice = Notice::where('status', 1)->order('id', 'desc')->select();
-        $total_income = Cache::store('redis')->get('agent:' . $agent['id'] . ':' . date('Ymd') . ':total_income');
+        $total_income = Cache::store('redis')->get('agent:' . $agent['id'] . ':' . date('Ymd') . ':total_sell');
         $total_order = Cache::store('redis')->get('agent:' . $agent['id'] . ':' . date('Ymd') . ':total_order');
+        $last_order = Cache::store('redis')->get('agent:' . $agent['id'] . ':' . date('Ymd', strtotime('-1 day')) . ':total_order');
+        $last_sell = Cache::store('redis')->get('agent:' . $agent['id'] . ':' . date('Ymd', strtotime('-1 day')) . ':total_sell');
         $handler = Cache::store('redis')->handler();
         $today_ip = $handler->sCard('agent:' . $agent['id'] . ':' . date('Ymd') . ':ip');
         $conversion_rate = $today_ip == 0 ? 0 : round($total_order / $today_ip, 2) * 100;
         $data = [
-            'today_income' => $total_income / 100,
+            'today_income' => $total_income,
             'today_orders' => $total_order ?? 0,
             'today_ip' => $today_ip,
-            'last_money' => 0,
-            'last_orders' => 0,
+            'last_money' => $last_sell,
+            'last_orders' => $last_order ?? 0,
             'conversion_rate' => $conversion_rate,
             'notices' => $notice,
             'userInfo' => $agent
