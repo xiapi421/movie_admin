@@ -28,7 +28,7 @@ class Tongji extends Command
         $users = User::where('id', '>', 0)->select();
         foreach ($users as $user) {
             $user->save([
-                'lastday_sell'=>Cache::store('redis')->get('agent:'.$user['id'].':'.date('Ymd').':total_sell',0),
+                'lastday_sell'=>Cache::store('redis')->get('agent:'.$user['id'].':'.date('Ymd',strtotime('-1 day')).':total_sell',0),
                 'lastday_money'=>$user['money'],
                 'today_order'=>0,
                 'today_money'=>0,
