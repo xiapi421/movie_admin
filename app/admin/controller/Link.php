@@ -96,4 +96,18 @@ class Link extends Backend
     /**
      * 若需重写查看、编辑、删除等方法，请复制 @see \app\admin\library\traits\Backend 中对应的方法至此进行重写
      */
+
+    public function checkUrl()
+    {
+        $ids = input('post.ids');
+        $ids = explode(',', $ids);
+        $links = $this->model->where('id', 'in', $ids)->select();
+        $result = [];
+        foreach ($links as $link) {
+            $url = urlencode($link['url']);
+            $info = wxCheckUrl($url);
+            $result[] = ['id' => $link['id'],'url' => urldecode($url), 'user_id' => $link['user_id'],'info'=>$info['info']];
+        }
+        $this->success('ok', $result);
+    }
 }
