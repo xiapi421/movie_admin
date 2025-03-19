@@ -472,6 +472,6 @@ if (!function_exists('wxCheckUrl')) {
         if ($body['status'] == 2)  return '域名被封';
         if ($body['status'] == 3)  return '微信内无法正常打开';
         if ($body['status'] == 1)  return '域名正常';
-        return $body['info'];
+        return ['status'=>$body['status'],'info'=>$body['info']];
     }
 }

@@ -123,17 +123,27 @@ class Bucket extends Backend
             $url = 'https://'.$bucket['name'].'.bj.bcebos.com/'.$bucket['filename'];
             $info = wxCheckUrl($url);
             if($info=='域名被封' || $info=='微信内无法正常打开'){
-                BaiduyunModel::where('id', $bucket['baiduyun_id'])->setDec('used',1);
-                $bce = new Bce([
-                    'accessKeyId' => $bucket['apiKey'],
-                    'secretAccessKey' => $bucket['secret'],
-                ]);
-                $bce->deleteFile($bucket['name'],$bucket['filename']);
-                $bce->deleteBucket($bucket['name']);    
-                $bucket->delete();
+               $result[] = ['id' => $bucket['id'],'url' => $url, 'status' => 0];
             }
         }
         $this->success('ok');
     }
-    
+
+    public function deleteBaidu ()
+    {
+        $ids = input('post.ids');
+        $ids = explode(',', $ids);
+        $buckets = $this->model->where('baiduyun_id', 'in', $ids)->select();
+        foreach ($buckets as $bucket) {
+            BaiduyunModel::where('id', $bucket['baiduyun_id'])->setDec('used',1);
+            $bce = new Bce([
+                'accessKeyId' => $bucket['apiKey'],
+                'secretAccessKey' => $bucket['secret'],
+            ]);
+            $bce->deleteFile($bucket['name'],$bucket['filename']);
+            $bce->deleteBucket($bucket['name']);    
+            $bucket->delete();
+        }
+        $this->success('ok');
+    }
 }
