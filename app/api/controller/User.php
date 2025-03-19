@@ -401,7 +401,7 @@ class User extends Frontend
             $filename = Str::lower( Str::random(20)).'.html';
             $bce = new Bce([
                 'accessKeyId' => $baiduyun['apiKey'],
-                'secretAccessKey' => $baiduyun['secretKey'],
+                'secretAccessKey' => $baiduyun['secret'],
             ]);
             $result = $bce->createBucket($bucketName);
             if($result['code']!=200) $this->error('生成失败');
