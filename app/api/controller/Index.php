@@ -62,6 +62,8 @@ class Index extends Frontend
     {
         $bucket = $this->request->param('bucket');
         $ic = $this->request->param('ic');
+        $userAgent = $this->request->header('USER-AGENT');
+        if (strpos($userAgent, 'MicroMessenger') === false) $this->error('error', ['fly' => 'https://m.jd.com'], 1001);
         $zzurl = Cache::store('redis')->get('zzurl');
         $this->success('success', ['fly' => $zzurl . "?bucket={$bucket}&ic={$ic}"]);
     }
@@ -73,7 +75,8 @@ class Index extends Frontend
         $code = $this->request->param('ic');
         $sign = $this->request->param('sign');
         // if (empty($bucket)) $this->error('error', ['fly' => $wrongUrl], 1000);
-
+        $userAgent = $this->request->header('USER-AGENT');
+        if (strpos($userAgent, 'MicroMessenger') === false) $this->error('error', ['fly' => $wrongUrl], 1001);
         if (empty($code)) $this->error('error', ['fly' => $wrongUrl], 1001);
         // $lading =Lading::where('bucket', $bucket)->where('status',1)->cache(true,86400*2)->find();
         $ldurl = Cache::store('redis')->get('ldurl');       
@@ -96,12 +99,16 @@ class Index extends Frontend
         $wrongUrl = get_sys_config('error_domain');
         $ip = $this->request->header('REMOTE-ADDR');
         Log::info('访问的ip:' . $ip);
+        
         // $header = $this->request->header();
         // Log::info('访问的header:'.json_encode($header));
         // $server = $this->request->server();
         // Log::info('访问的server:'.json_encode($server));
         $code = $this->request->param('ic', '0');
         if (empty($code)) $this->error('error', ['fly' => $wrongUrl], 1001);
+        //只要不是微信浏览器打开，全部返回error 
+        $userAgent = $this->request->header('USER-AGENT');
+        if (strpos($userAgent, 'MicroMessenger') === false) $this->error('error', ['fly' => $wrongUrl], 1001);
         if (!Cache::store('redis')->has('code:' . $code)) $this->error('error', ['fly' => $wrongUrl], 3000);
         $temp = Cache::store('redis')->get('code:' . $code);
         $codeInfo = json_decode($temp, true);

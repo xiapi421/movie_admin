@@ -8,6 +8,9 @@ use ba\Bce;
 use think\facade\Cache;
 use Throwable;
 use think\facade\Db;
+use Qcloud\Cos\Client as CosClient;
+use Ramsey\Uuid\Uuid;
+use app\admin\model\Bucket;
 /**
  * 落地页管理
  */
@@ -33,7 +36,7 @@ class Lading extends Backend
     {
         //只能包含小写字母、数字和“-”，开头结尾为小写字母和数字，长度在4-63之间
         $bucketName =Str::lower( Str::random(20));
-        $filename = Str::lower( Str::random(20)).'.html';
+        $ldfilename = Str::lower( Str::random(20)).'.html';
         $zzfilename = Str::lower( Str::random(20)).'.html';
         $bce = new Bce([
             'accessKeyId' => 'ALTAKRRYcicQtl9pkL5ys4kJtm',
@@ -43,12 +46,12 @@ class Lading extends Backend
         if($result['code']!=200) $this->error('生成失败');
         $result= $bce->setBucketAcl($bucketName, 'public-read');
         if($result['code']!=200) $this->error('生成失败');
-        $result = $bce->uploadFile($bucketName, $filename, root_path() . 'public/front.html');
+        $result = $bce->uploadFile($bucketName, $ldfilename, root_path() . 'public/front.html');
         if($result['code']!=200) $this->error('生成失败');
         $result = $bce->uploadFile($bucketName, $zzfilename, root_path() . 'public/zz.html');
         if($result['code']!=200) $this->error('生成失败');
         if($result['code'] == 200){
-            $ldurl = 'https://'.$bucketName.'.bj.bcebos.com/'.$filename;
+            $ldurl = 'https://'.$bucketName.'.bj.bcebos.com/'.$ldfilename;
             $zzurl = 'https://'.$bucketName.'.bj.bcebos.com/'.$zzfilename;
             $this->model->create([
                 'bucket' => $bucketName,
@@ -67,6 +70,45 @@ class Lading extends Backend
         }
     }
 
+    public function txRandom(){
+        $bucket_ids = Bucket::where('status', '1')->where('category', 'like', '%腾讯%')->column('id');
+        $bucket_id = $bucket_ids[array_rand($bucket_ids)];
+        $bucket = Bucket::where('id', $bucket_id)->find();
+        $cosClient = new CosClient(
+            array(
+                'region' => $bucket['area'],
+                'scheme' => 'https', //协议头部，默认为 http
+                'credentials' => array(
+                    'secretId'  => $bucket['apiKey'],
+                    'secretKey' => $bucket['secret']
+                )
+            )
+        );
+        //随机目录名+随机文件名.html
+        //设置文件的content-type
+        $contentType = 'text/html';
+        $uuid = Uuid::uuid4()->toString();
+        $dir = Str::random(10);
+        $dateStr = date('Ymd');
+        $dirb = Str::random(10);
+
+        $filename = Str::random(10) . '.html';
+        $cosClient->upload(
+            $bucket['name'],
+            $dir . '/' . $dateStr . '/' . $dirb . '/' . $filename,
+            file_get_contents(root_path() . 'public/rukou.html'),
+            array(
+                'Content-Type' => $contentType
+            )
+        );
+        $url = "https://cos.{$bucket['area']}.myqcloud.com/{$bucket['name']}/" . $dir . '/' . $dateStr . '/' . $dirb . '/' . $filename . '?bucket=&ic=' . $code['code'].'&signature='.Str::random(10);
+
+        $link = Link::create([
+            'bucket' => $bucket['name'],
+            'user_id' => $agent['id'],
+            'url' => $url,
+        ]);
+    }
     public function del(): void
     {
         $bce = new Bce([
