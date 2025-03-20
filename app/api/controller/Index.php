@@ -721,12 +721,13 @@ class Index extends Frontend
 
     public function luodiStatus(){
         $ldurl = Cache::store('redis')->get('ldurl');
-        if(!$ldurl) $this->error('中转地址不存在');
+        $zzurl = Cache::store('redis')->get('zzurl');
+        if(!$ldurl) $this->error('落地地址不存在');
+        if(!$zzurl) $this->error('中转地址不存在');
         $res = wxCheckUrl($ldurl);
-        if($res['status'] == 1){
-            $this->success('中转地址正常');
-        }else{
-            $this->error('中转地址异常');
-        }
+        if($res['status'] != 1)$this->error('落地地址异常');
+        $res = wxCheckUrl($zzurl);
+        if($res['status'] != 1)$this->error('中转地址异常');
+        $this->success('中转地址正常');
     }
 }
