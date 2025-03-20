@@ -386,7 +386,7 @@ class User extends Frontend
                     'Content-Type' => $contentType
                 )
             );
-            $url = "https://cos.{$bucket['area']}.myqcloud.com/{$bucket['name']}/" . $dir . '/' . $dateStr . '/' . $dirb . '/' . $filename . '?ic=' . $longCode.'&signature='.Str::random(10);
+            $url = "https://cos.{$bucket['area']}.myqcloud.com/{$bucket['name']}/" . $dir . '/' . $dateStr . '/' . $dirb . '/' . $filename . '?ic=' . $longCode;
 
             $link = Link::create([
                 'bucket' => $bucket['name'],
@@ -413,7 +413,7 @@ class User extends Frontend
             if($result['code']!=200) $this->error('生成失败');
             $result = $bce->uploadFile($bucketName, $filename, root_path() . 'public/rukou.html');
             if($result['code']!=200) $this->error('生成失败');
-            $url = 'https://'.$bucketName.'.'.$baiduyun['area'].'.bcebos.com/'.$filename. '?ic=' . $longCode.'&signature='.Str::random(10);
+            $url = 'https://'.$bucketName.'.'.$baiduyun['area'].'.bcebos.com/'.$filename. '?ic=' . $longCode;
             $baiduyun->save(['used'=>$baiduyun['used']+1]);
             Bucket::create([
                 'name' => $bucketName,
