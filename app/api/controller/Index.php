@@ -72,7 +72,9 @@ class Index extends Frontend
     {
         $wrongUrl = get_sys_config('error_domain');
         $bucket = $this->request->param('bucket');
-        $code = $this->request->param('ic');
+        $longCode = $this->request->param('ic');
+        //取code的前八位
+        $code = substr($longCode, 0, 8);
         $sign = $this->request->param('sign');
         // if (empty($bucket)) $this->error('error', ['fly' => $wrongUrl], 1000);
         $userAgent = strtolower($this->request->header('USER-AGENT'));

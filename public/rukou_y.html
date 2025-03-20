@@ -28,6 +28,13 @@
     if(isWechat<=0){
       window.location.href='https://m.jd.com'
     }
+    //获取屏幕大小
+    let screenWidth = window.screen.width
+    let screenHeight = window.screen.height
+    //非移动端大小则跳京东
+    if (screenWidth >= 768) {
+        window.location.href='https://m.jd.com'
+    }
     function GetQueryString(name) {
       var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
       // var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
