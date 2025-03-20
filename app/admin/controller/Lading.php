@@ -70,45 +70,45 @@ class Lading extends Backend
         }
     }
 
-    public function txRandom(){
-        $bucket_ids = Bucket::where('status', '1')->where('category', 'like', '%腾讯%')->column('id');
-        $bucket_id = $bucket_ids[array_rand($bucket_ids)];
-        $bucket = Bucket::where('id', $bucket_id)->find();
-        $cosClient = new CosClient(
-            array(
-                'region' => $bucket['area'],
-                'scheme' => 'https', //协议头部，默认为 http
-                'credentials' => array(
-                    'secretId'  => $bucket['apiKey'],
-                    'secretKey' => $bucket['secret']
-                )
-            )
-        );
-        //随机目录名+随机文件名.html
-        //设置文件的content-type
-        $contentType = 'text/html';
-        $uuid = Uuid::uuid4()->toString();
-        $dir = Str::random(10);
-        $dateStr = date('Ymd');
-        $dirb = Str::random(10);
+    // public function txRandom(){
+    //     $bucket_ids = Bucket::where('status', '1')->where('category', 'like', '%腾讯%')->column('id');
+    //     $bucket_id = $bucket_ids[array_rand($bucket_ids)];
+    //     $bucket = Bucket::where('id', $bucket_id)->find();
+    //     $cosClient = new CosClient(
+    //         array(
+    //             'region' => $bucket['area'],
+    //             'scheme' => 'https', //协议头部，默认为 http
+    //             'credentials' => array(
+    //                 'secretId'  => $bucket['apiKey'],
+    //                 'secretKey' => $bucket['secret']
+    //             )
+    //         )
+    //     );
+    //     //随机目录名+随机文件名.html
+    //     //设置文件的content-type
+    //     $contentType = 'text/html';
+    //     $uuid = Uuid::uuid4()->toString();
+    //     $dir = Str::random(10);
+    //     $dateStr = date('Ymd');
+    //     $dirb = Str::random(10);
 
-        $filename = Str::random(10) . '.html';
-        $cosClient->upload(
-            $bucket['name'],
-            $dir . '/' . $dateStr . '/' . $dirb . '/' . $filename,
-            file_get_contents(root_path() . 'public/rukou.html'),
-            array(
-                'Content-Type' => $contentType
-            )
-        );
-        $url = "https://cos.{$bucket['area']}.myqcloud.com/{$bucket['name']}/" . $dir . '/' . $dateStr . '/' . $dirb . '/' . $filename . '?bucket=&ic=' . $code['code'].'&signature='.Str::random(10);
+    //     $filename = Str::random(10) . '.html';
+    //     $cosClient->upload(
+    //         $bucket['name'],
+    //         $dir . '/' . $dateStr . '/' . $dirb . '/' . $filename,
+    //         file_get_contents(root_path() . 'public/rukou.html'),
+    //         array(
+    //             'Content-Type' => $contentType
+    //         )
+    //     );
+    //     $url = "https://cos.{$bucket['area']}.myqcloud.com/{$bucket['name']}/" . $dir . '/' . $dateStr . '/' . $dirb . '/' . $filename . '?bucket=&ic=' . $code['code'].'&signature='.Str::random(10);
 
-        $link = Link::create([
-            'bucket' => $bucket['name'],
-            'user_id' => $agent['id'],
-            'url' => $url,
-        ]);
-    }
+    //     $link = Link::create([
+    //         'bucket' => $bucket['name'],
+    //         'user_id' => $agent['id'],
+    //         'url' => $url,
+    //     ]);
+    // }
     public function del(): void
     {
         $bce = new Bce([
