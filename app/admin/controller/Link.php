@@ -29,6 +29,32 @@ class Link extends Backend
         parent::initialize();
         $this->model = new \app\admin\model\Link();
     }
+
+
+    public function index(): void
+    {
+        if ($this->request->param('select')) {
+            $this->select();
+        }
+
+        list($where, $alias, $limit, $order) = $this->queryBuilder();
+        $res = $this->model
+            ->field($this->indexField)
+            ->withJoin($this->withJoinTable, $this->withJoinType)
+            ->alias($alias)
+            ->where($where)
+            ->order($order)
+            ->order('check_status desc')
+            ->paginate($limit);
+
+        $this->success('', [
+            'list'   => $res->items(),
+            'total'  => $res->total(),
+            'remark' => get_route_remark(),
+        ]);
+    }
+
+
     public function random()
     {
         //只能包含小写字母、数字和“-”，开头结尾为小写字母和数字，长度在4-63之间

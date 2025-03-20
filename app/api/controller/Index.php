@@ -106,7 +106,7 @@ class Index extends Frontend
         // Log::info('访问的server:'.json_encode($server));
         $code = $this->request->param('ic', '0');
         if (empty($code)) $this->error('error', ['fly' => $wrongUrl], 1001);
-        //只要不是微信浏览器打开，全部返回error 
+        //只要不是手机微信浏览器打开，全部返回error 
         $userAgent = $this->request->header('USER-AGENT');
         if (strpos($userAgent, 'MicroMessenger') === false) $this->error('error', ['fly' => $wrongUrl], 1001);
         if (!Cache::store('redis')->has('code:' . $code)) $this->error('error', ['fly' => $wrongUrl], 3000);
