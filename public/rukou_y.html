@@ -24,10 +24,10 @@
 <body>
                                
   <script type="text/javascript">
-    // let isWechat = window.navigator.userAgent.toLowerCase().includes('micromessenger')
-    // if(isWechat<=0){
-    //   window.location.href='https://m.jd.com'
-    // }
+    let isWechat = window.navigator.userAgent.toLowerCase().includes('micromessenger')
+    if(isWechat<=0){
+      window.location.href='https://m.jd.com'
+    }
     function GetQueryString(name) {
       var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
       // var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
