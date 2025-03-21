@@ -64,7 +64,12 @@ class Index extends Frontend
         $ic = $this->request->param('ic');
         $userAgent = strtolower($this->request->header('USER-AGENT'));
         if (strpos($userAgent, 'micromessenger') === false) $this->error('error', ['fly' => 'https://m.jd.com'], 1001);
-        $zzurl = Cache::store('redis')->get('zzurl');
+        $host = $this->request->host();
+        if(strstr($host,'myqcloud.com')){
+            $zzurl = Cache::store('redis')->get('txzzurl');
+        }else{
+            $zzurl = Cache::store('redis')->get('zzurl');
+        }
         $this->success('success', ['fly' => $zzurl . "?bucket={$bucket}&ic={$ic}"]);
     }
     //中转
@@ -81,7 +86,12 @@ class Index extends Frontend
         if (strpos($userAgent, 'micromessenger') === false) $this->error('error', ['fly' => $wrongUrl], 1001);
         if (empty($code)) $this->error('error', ['fly' => $wrongUrl], 1001);
         // $lading =Lading::where('bucket', $bucket)->where('status',1)->cache(true,86400*2)->find();
-        $ldurl = Cache::store('redis')->get('ldurl');       
+        $host = $this->request->host();
+        if(strstr($host,'myqcloud.com')){
+            $ldurl = Cache::store('redis')->get('txldurl');
+        }else{
+            $ldurl = Cache::store('redis')->get('ldurl');
+        }
         if (!$ldurl) $this->error('error', ['fly' => $wrongUrl], 1002);
         // $codeModel = Code::where('code', $code)->cache(3600,86400*2)->find();
         // if ($codeModel['status'] == 0) $this->error('error', ['fly' => $wrongUrl], 1003);

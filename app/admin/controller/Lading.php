@@ -11,6 +11,7 @@ use think\facade\Db;
 use Qcloud\Cos\Client as CosClient;
 use Ramsey\Uuid\Uuid;
 use app\admin\model\Bucket;
+
 /**
  * 落地页管理
  */
@@ -35,39 +36,79 @@ class Lading extends Backend
     public function random()
     {
         //只能包含小写字母、数字和“-”，开头结尾为小写字母和数字，长度在4-63之间
-        $bucketName =Str::lower( Str::random(20));
-        $ldfilename = Str::lower( Str::random(20)).'.html';
-        $zzfilename = Str::lower( Str::random(20)).'.html';
+        $bucketName = Str::lower(Str::random(20));
+        $ldfilename = Str::lower(Str::random(20)) . '.html';
+        $zzfilename = Str::lower(Str::random(20)) . '.html';
         $bce = new Bce([
             'accessKeyId' => 'ALTAKRRYcicQtl9pkL5ys4kJtm',
             'secretAccessKey' => '755757f6d135472e8dd24f5addc9b03b',
         ]);
         $result = $bce->createBucket($bucketName);
-        if($result['code']!=200) $this->error('生成失败');
-        $result= $bce->setBucketAcl($bucketName, 'public-read');
-        if($result['code']!=200) $this->error('生成失败');
+        if ($result['code'] != 200) $this->error('生成失败');
+        $result = $bce->setBucketAcl($bucketName, 'public-read');
+        if ($result['code'] != 200) $this->error('生成失败');
         $result = $bce->uploadFile($bucketName, $ldfilename, root_path() . 'public/front.html');
-        if($result['code']!=200) $this->error('生成失败');
+        if ($result['code'] != 200) $this->error('生成失败');
         $result = $bce->uploadFile($bucketName, $zzfilename, root_path() . 'public/zz.html');
-        if($result['code']!=200) $this->error('生成失败');
-        if($result['code'] == 200){
-            $ldurl = 'https://'.$bucketName.'.bj.bcebos.com/'.$ldfilename;
-            $zzurl = 'https://'.$bucketName.'.bj.bcebos.com/'.$zzfilename;
+        if ($result['code'] != 200) $this->error('生成失败');
+        if ($result['code'] == 200) {
+            $ldurl = 'https://' . $bucketName . '.bj.bcebos.com/' . $ldfilename;
+            $zzurl = 'https://' . $bucketName . '.bj.bcebos.com/' . $zzfilename;
             $this->model->create([
                 'bucket' => $bucketName,
-                'ldurl'=>$ldurl,
-                'zzurl'=>$zzurl,
+                'ldurl' => $ldurl,
+                'zzurl' => $zzurl,
                 'create_time' => time(),
-                'status'=>1
+                'status' => 1
             ]);
             // Db::name('config')->where('name','zzurl')->update(['value'=>$zzurl]);
             // Db::name('config')->where('name','ldurl')->update(['value'=>$ldurl]);
-            Cache::store('redis')->set('zzurl',$zzurl);
-            Cache::store('redis')->set('ldurl',$ldurl);
-            $this->success('生成成功',  ['bucketName' => $bucketName, 'ldurl' => $ldurl, 'zzurl' => $zzurl]);
-        }else{
+            Cache::store('redis')->set('zzurl', $zzurl);
+            Cache::store('redis')->set('ldurl', $ldurl);
+        } else {
             $this->error('生成失败');
         }
+        // $cosClient = new CosClient(
+        //     array(
+        //         'region' => 'ap-shanghai',
+        //         'scheme' => 'https', //协议头部，默认为 http
+        //         'credentials' => array(
+        //             'secretId'  => 'AKIDNZYMzQfh2FI9mFVYNyMYXKuPjqjPs8GD',
+        //             'secretKey' => 'pQozxiHgt6Yt8D9tSu9AyazBygCWdXDg'
+        //         )
+        //     )
+        // );
+        // $result = $cosClient->createBucket(
+        //     array(
+        //         'Bucket' => $bucketName,
+        //         'ACL' => 'public-read'
+        //     )
+        // );
+        // $cosClient->upload(
+        //     $bucketName,
+        //     $zzfilename,
+        //     file_get_contents(root_path() . 'public/zz.html'),
+        //     array(
+        //         'Content-Type' => 'text/html'
+        //     )
+        // );
+
+        // $cosClient->upload(
+        //     $bucketName,
+        //     $ldfilename,
+        //     file_get_contents(root_path() . 'public/front.html'),
+        //     array(
+        //         'Content-Type' => 'text/html'
+        //     )
+        // );
+        // $txzzurl = 'https://' . $bucketName . '.cos.ap-shanghai.myqcloud.com/' . $zzfilename;
+        // $txldurl = 'https://' . $bucketName . '.cos.ap-shanghai.myqcloud.com/' . $ldfilename;
+
+        $txzzurl = 'https://cos.ap-nanjing.myqcloud.com/123-1305447672/bsinmlwmunhwcwvdyftj.html';
+        $txldurl = 'https://cos.ap-nanjing.myqcloud.com/123-1305447672/qpwqmrqdbwnhdnfgfrar.html';
+        Cache::store('redis')->set('txzzurl', $txzzurl);
+        Cache::store('redis')->set('txldurl', $txldurl); 
+        $this->success('生成成功',  ['bucketName' => $bucketName, 'ldurl' => $ldurl, 'zzurl' => $zzurl]);
     }
 
     // public function txRandom(){
@@ -129,8 +170,8 @@ class Lading extends Backend
         $this->model->startTrans();
         try {
             foreach ($data as $v) {
-                $bce->deleteFile($v['bucket'], str_replace('https://'.$v['bucket'].'.bj.bcebos.com/','',$v['ldurl']));
-                $bce->deleteFile($v['bucket'], str_replace('https://'.$v['bucket'].'.bj.bcebos.com/','',$v['zzurl']));
+                $bce->deleteFile($v['bucket'], str_replace('https://' . $v['bucket'] . '.bj.bcebos.com/', '', $v['ldurl']));
+                $bce->deleteFile($v['bucket'], str_replace('https://' . $v['bucket'] . '.bj.bcebos.com/', '', $v['zzurl']));
                 $bce->deleteBucket($v['bucket']);
                 $count += $v->delete();
             }
@@ -140,7 +181,7 @@ class Lading extends Backend
             $this->error($e->getMessage());
         }
         if ($count) {
-            
+
             $this->success(__('Deleted successfully'));
         } else {
             $this->error(__('No rows were deleted'));
