@@ -43,7 +43,6 @@ class Link extends Backend
             ->withJoin($this->withJoinTable, $this->withJoinType)
             ->alias($alias)
             ->where($where)
-            ->order($order)
             ->order('check_status desc')
             ->paginate($limit);
 
