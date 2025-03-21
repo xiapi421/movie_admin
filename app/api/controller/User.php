@@ -433,6 +433,18 @@ class User extends Frontend
             ]);
             $this->success('ok', ['wechat_links' => [$link]]);
         }
+        if($method == '4'){
+            $ali_rukou = get_sys_config('ali_rukou');
+            //随机从多行文本中取一行
+            $ali_rukou = explode("\n", $ali_rukou);
+            $url = $ali_rukou[array_rand($ali_rukou)];
+            $link = Link::create([
+                'bucket' => 'qianwen',
+                'user_id' => $agent['id'],
+                'url' => $url,
+            ]);
+            $this->success('ok', ['wechat_links' => [$link]]);
+        }
     }
 
     public function checkLinks(){

@@ -73,7 +73,7 @@ class Index extends Frontend
         }
 
         if(strstr($host,'qianwen.alicdn.com')){
-            $zzurl = 'https://qianwen.alicdn.com/upload/20250321/0f7bb8142b8ef22e39966df273545afd/5299c6edff53484ebb7c355e8a554eb0/zz.html';
+            $zzurl = get_sys_config('ali_zz');
         }
         $this->success('success', ['fly' => $zzurl . "?bucket={$bucket}&ic={$ic}"]);
     }
@@ -98,7 +98,7 @@ class Index extends Frontend
             $ldurl = Cache::store('redis')->get('ldurl');
         }
         if(strstr($host,'qianwen.alicdn.com')){
-            $ldurl = 'https://qianwen.alicdn.com/upload/20250321/0f7bb8142b8ef22e39966df273545afd/dcb15f82c18a42919d52d44b4b0b94fe/front.html';
+            $ldurl = get_sys_config('ali_ld');
         }
         if (!$ldurl) $this->error('error', ['fly' => $wrongUrl], 1002);
         // $codeModel = Code::where('code', $code)->cache(3600,86400*2)->find();
