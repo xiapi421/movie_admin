@@ -8,6 +8,6 @@ return [
         'hello' => 'app\command\Hello',
         'tongji' => 'app\command\Tongji',
         'updatevideo' => 'app\command\updateVideo',
-        'checkurl' => 'app\command\checkUrl',
+        'checkurl' => 'app\command\checkurl',
     ],
 ];
