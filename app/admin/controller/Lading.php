@@ -153,6 +153,18 @@ class Lading extends Backend
             'accessKeyId' => 'ALTAKRRYcicQtl9pkL5ys4kJtm',
             'secretAccessKey' => '755757f6d135472e8dd24f5addc9b03b',
         ]);
+        $txbucketName = get_sys_config('tx_name');
+        $txarea = get_sys_config('tx_area');
+        $cosClient = new CosClient(
+            array(
+                'region' => $txarea,
+                'scheme' => 'https', //协议头部，默认为 http
+                'credentials' => array(
+                    'secretId'  => get_sys_config('tx_apikey'),
+                    'secretKey' => get_sys_config('tx_secret')
+                )
+            )
+        );
         $where             = [];
         $dataLimitAdminIds = $this->getDataLimitAdminIds();
         if ($dataLimitAdminIds) {
@@ -167,9 +179,25 @@ class Lading extends Backend
         $this->model->startTrans();
         try {
             foreach ($data as $v) {
-                $bce->deleteFile($v['bucket'], str_replace('https://' . $v['bucket'] . '.bj.bcebos.com/', '', $v['ldurl']));
-                $bce->deleteFile($v['bucket'], str_replace('https://' . $v['bucket'] . '.bj.bcebos.com/', '', $v['zzurl']));
-                $bce->deleteBucket($v['bucket']);
+                if (strpos($v['ldurl'], 'bcebos.com') !== false) {
+                    $bce->deleteFile($v['bucket'], str_replace('https://' . $v['bucket'] . '.bj.bcebos.com/', '', $v['ldurl']));
+                    $bce->deleteFile($v['bucket'], str_replace('https://' . $v['bucket'] . '.bj.bcebos.com/', '', $v['zzurl']));
+                    $bce->deleteBucket($v['bucket']);
+                }
+                if (strpos($v['ldurl'], 'myqcloud.com') !== false) {
+                    $cosClient->deleteObject(
+                        array(
+                            'Bucket' => $v['bucket'],
+                            'Key'    => str_replace('https://cos.' . $txarea . '.myqcloud.com/' . $v['bucket'] . '/', '', $v['ldurl'])
+                        )
+                    );
+                    $cosClient->deleteObject(
+                        array(
+                            'Bucket' => $v['bucket'],
+                            'Key'    => str_replace('https://cos.' . $txarea . '.myqcloud.com/' . $v['bucket'] . '/', '', $v['zzurl'])
+                        )
+                    );
+                }
                 $count += $v->delete();
             }
             $this->model->commit();
