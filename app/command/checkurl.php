@@ -15,8 +15,8 @@ class checkurl extends Command
     protected function configure()
     {
         // 指令配置
-        $this->setName('app\command\checkurl')
-            ->setDescription('the app\command\checkurl command');
+        $this->setName('checkurl')
+            ->setDescription('检查链接是否有效');
     }
 
     protected function execute(Input $input, Output $output)
