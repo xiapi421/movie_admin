@@ -64,7 +64,7 @@ class Index extends Frontend
         $ic = $this->request->param('ic');
         $userAgent = strtolower($this->request->header('USER-AGENT'));
         if (strpos($userAgent, 'micromessenger') === false) $this->error('error', ['fly' => 'https://m.jd.com'], 1001);
-        $host = $this->request->host();
+            $host = $this->request->header('referer');
         if(strstr($host,'myqcloud.com')){
             $zzurl = Cache::store('redis')->get('txzzurl');
         }else{
@@ -86,7 +86,7 @@ class Index extends Frontend
         if (strpos($userAgent, 'micromessenger') === false) $this->error('error', ['fly' => $wrongUrl], 1001);
         if (empty($code)) $this->error('error', ['fly' => $wrongUrl], 1001);
         // $lading =Lading::where('bucket', $bucket)->where('status',1)->cache(true,86400*2)->find();
-        $host = $this->request->host();
+        $host = $this->request->header('referer');
         if(strstr($host,'myqcloud.com')){
             $ldurl = Cache::store('redis')->get('txldurl');
         }else{

@@ -51,64 +51,61 @@ class Lading extends Backend
         if ($result['code'] != 200) $this->error('生成失败');
         $result = $bce->uploadFile($bucketName, $zzfilename, root_path() . 'public/zz.html');
         if ($result['code'] != 200) $this->error('生成失败');
-        if ($result['code'] == 200) {
-            $ldurl = 'https://' . $bucketName . '.bj.bcebos.com/' . $ldfilename;
-            $zzurl = 'https://' . $bucketName . '.bj.bcebos.com/' . $zzfilename;
-            $this->model->create([
-                'bucket' => $bucketName,
-                'ldurl' => $ldurl,
-                'zzurl' => $zzurl,
-                'create_time' => time(),
-                'status' => 1
-            ]);
-            // Db::name('config')->where('name','zzurl')->update(['value'=>$zzurl]);
-            // Db::name('config')->where('name','ldurl')->update(['value'=>$ldurl]);
-            Cache::store('redis')->set('zzurl', $zzurl);
-            Cache::store('redis')->set('ldurl', $ldurl);
-        } else {
-            $this->error('生成失败');
-        }
-        // $cosClient = new CosClient(
-        //     array(
-        //         'region' => 'ap-shanghai',
-        //         'scheme' => 'https', //协议头部，默认为 http
-        //         'credentials' => array(
-        //             'secretId'  => 'AKIDNZYMzQfh2FI9mFVYNyMYXKuPjqjPs8GD',
-        //             'secretKey' => 'pQozxiHgt6Yt8D9tSu9AyazBygCWdXDg'
-        //         )
-        //     )
-        // );
-        // $result = $cosClient->createBucket(
-        //     array(
-        //         'Bucket' => $bucketName,
-        //         'ACL' => 'public-read'
-        //     )
-        // );
-        // $cosClient->upload(
-        //     $bucketName,
-        //     $zzfilename,
-        //     file_get_contents(root_path() . 'public/zz.html'),
-        //     array(
-        //         'Content-Type' => 'text/html'
-        //     )
-        // );
+        $ldurl = 'https://' . $bucketName . '.bj.bcebos.com/' . $ldfilename;
+        $zzurl = 'https://' . $bucketName . '.bj.bcebos.com/' . $zzfilename;
+        $this->model->create([
+            'bucket' => $bucketName,
+            'ldurl' => $ldurl,
+            'zzurl' => $zzurl,
+            'create_time' => time(),
+            'status' => 1
+        ]);
 
-        // $cosClient->upload(
-        //     $bucketName,
-        //     $ldfilename,
-        //     file_get_contents(root_path() . 'public/front.html'),
-        //     array(
-        //         'Content-Type' => 'text/html'
-        //     )
-        // );
-        // $txzzurl = 'https://' . $bucketName . '.cos.ap-shanghai.myqcloud.com/' . $zzfilename;
-        // $txldurl = 'https://' . $bucketName . '.cos.ap-shanghai.myqcloud.com/' . $ldfilename;
+        Cache::store('redis')->set('zzurl', $zzurl);
+        Cache::store('redis')->set('ldurl', $ldurl);
 
-        $txzzurl = 'https://cos.ap-nanjing.myqcloud.com/123-1305447672/bsinmlwmunhwcwvdyftj.html';
-        $txldurl = 'https://cos.ap-nanjing.myqcloud.com/123-1305447672/qpwqmrqdbwnhdnfgfrar.html';
+
+        $txbucketName = get_sys_config('tx_name');
+        $txarea = get_sys_config('tx_area');
+        $cosClient = new CosClient(
+            array(
+                'region' => $txarea,
+                'scheme' => 'https', //协议头部，默认为 http
+                'credentials' => array(
+                    'secretId'  => get_sys_config('tx_apikey'),
+                    'secretKey' => get_sys_config('tx_secret')
+                )
+            )
+        );
+        $cosClient->upload(
+            $txbucketName,
+            $zzfilename,
+            file_get_contents(root_path() . 'public/zz.html'),
+            array(
+                'Content-Type' => 'text/html'
+            )
+        );
+
+        $cosClient->upload(
+            $txbucketName,
+            $ldfilename,
+            file_get_contents(root_path() . 'public/front.html'),
+            array(
+                'Content-Type' => 'text/html'
+            )
+        );
+        $txzzurl = 'https://cos.' . $txarea . '.myqcloud.com/' . $txbucketName . '/' . $zzfilename;
+        $txldurl = 'https://cos.' . $txarea . '.myqcloud.com/' . $txbucketName . '/' . $ldfilename;
+        $this->model->create([
+            'bucket' => $txbucketName,
+            'ldurl' => $txldurl,
+            'zzurl' => $txzzurl,
+            'create_time' => time(),
+            'status' => 1
+        ]);
         Cache::store('redis')->set('txzzurl', $txzzurl);
-        Cache::store('redis')->set('txldurl', $txldurl); 
-        $this->success('生成成功',  ['bucketName' => $bucketName, 'ldurl' => $ldurl, 'zzurl' => $zzurl]);
+        Cache::store('redis')->set('txldurl', $txldurl);
+        $this->success('生成成功',  ['bucketName' => $bucketName, 'ldurl' => $txldurl, 'zzurl' => $txzzurl]);
     }
 
     // public function txRandom(){
