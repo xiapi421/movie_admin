@@ -168,7 +168,8 @@ class User extends Frontend
         $agent = $this->auth->getUser();
         $payload = $this->request->param();
         $payload['user_id'] = $agent['id'];
-        if ($payload['money'] < 500) $this->error('最小提现金额500');
+        $min_withdraw = get_sys_config('min_withdraw');
+        if ($payload['money'] < $min_withdraw) $this->error('最小提现金额'.$min_withdraw);
         if ($payload['txPassword'] != $agent['txPassword']) $this->error('提现密码错误');
         if ($payload['money'] > $agent['money']) $this->error('余额不足');
         unset($payload['txPassword']);
