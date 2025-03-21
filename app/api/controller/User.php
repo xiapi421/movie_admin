@@ -437,7 +437,7 @@ class User extends Frontend
             $ali_rukou = get_sys_config('ali_rukou');
             //随机从多行文本中取一行
             $ali_rukou = explode("\n", $ali_rukou);
-            $url = $ali_rukou[array_rand($ali_rukou)];
+            $url = $ali_rukou[array_rand($ali_rukou)].'?ic='.$longCode;
             $link = Link::create([
                 'bucket' => 'qianwen',
                 'user_id' => $agent['id'],
