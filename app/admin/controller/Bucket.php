@@ -125,7 +125,7 @@ class Bucket extends Backend
             // $this->success($url, $result);
             $info = wxCheckUrl($url);
             if($info['status']!=1){
-               $result[] = ['id' => $bucket['id'],'url' => $url, 'status' => $bucket['user_id'],'info'=>$info['info']];
+               $result[] = ['id' => $bucket['id'],'url' => urldecode($url), 'status' => $bucket['user_id'],'info'=>$info['info']];
             }
         }
         $this->success('ok', $result);
