@@ -32,6 +32,7 @@
               document.querySelector("div").style.backgroundColor = "green";
             } else {
               document.querySelector("div").style.backgroundColor = "red";
+              document.querySelector("div").innerHTML = res.msg;
             }
           });
       }, 10000);

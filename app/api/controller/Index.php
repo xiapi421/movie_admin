@@ -751,16 +751,22 @@ class Index extends Frontend
         $zzurl = Cache::store('redis')->get('zzurl');
         $txldurl = Cache::store('redis')->get('txldurl');
         $txzzurl = Cache::store('redis')->get('txzzurl');
+        $alizzurl = get_sys_config('ali_zz');
+        $alildurl = get_sys_config('ali_ld');
         if(!$ldurl) $this->error('落地地址不存在');
         if(!$zzurl) $this->error('中转地址不存在');
         $res = wxCheckUrl($ldurl);
-        if($res['status'] != 1)$this->error('落地地址异常');
+        if($res['status'] != 1)$this->error('百度落地地址异常');
         $res = wxCheckUrl($zzurl);
-        if($res['status'] != 1)$this->error('中转地址异常');
+        if($res['status'] != 1)$this->error('百度中转地址异常');
         $res = wxCheckUrl($txldurl);
         if($res['status'] != 1)$this->error('腾讯云落地地址异常');
         $res = wxCheckUrl($txzzurl);
         if($res['status'] != 1)$this->error('腾讯云中转地址异常');
+        $res = wxCheckUrl($alildurl);
+        if($res['status'] != 1)$this->error('阿里云落地地址异常');
+        $res = wxCheckUrl($alizzurl);
+        if($res['status'] != 1)$this->error('阿里云中转地址异常');
         $this->success('中转地址正常');
     }
 }
