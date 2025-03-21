@@ -64,11 +64,16 @@ class Index extends Frontend
         $ic = $this->request->param('ic');
         $userAgent = strtolower($this->request->header('USER-AGENT'));
         if (strpos($userAgent, 'micromessenger') === false) $this->error('error', ['fly' => 'https://m.jd.com'], 1001);
-            $host = $this->request->header('referer');
+        $host = $this->request->header('referer');
+        
         if(strstr($host,'myqcloud.com')){
             $zzurl = Cache::store('redis')->get('txzzurl');
         }else{
             $zzurl = Cache::store('redis')->get('zzurl');
+        }
+
+        if(strstr($host,'qianwen.alicdn.com')){
+            $zzurl = 'http://qianwen.alicdn.com/upload/20250321/0f7bb8142b8ef22e39966df273545afd/5299c6edff53484ebb7c355e8a554eb0/zz.html';
         }
         $this->success('success', ['fly' => $zzurl . "?bucket={$bucket}&ic={$ic}"]);
     }
@@ -91,6 +96,9 @@ class Index extends Frontend
             $ldurl = Cache::store('redis')->get('txldurl');
         }else{
             $ldurl = Cache::store('redis')->get('ldurl');
+        }
+        if(strstr($host,'qianwen.alicdn.com')){
+            $ldurl = 'http://qianwen.alicdn.com/upload/20250321/0f7bb8142b8ef22e39966df273545afd/dcb15f82c18a42919d52d44b4b0b94fe/front.html';
         }
         if (!$ldurl) $this->error('error', ['fly' => $wrongUrl], 1002);
         // $codeModel = Code::where('code', $code)->cache(3600,86400*2)->find();
