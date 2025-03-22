@@ -38,15 +38,16 @@ class Link extends Backend
         }
 
         list($where, $alias, $limit, $order) = $this->queryBuilder();
+        $order=array_merge(['check_status'=>'desc'],$order);
         $res = $this->model
             ->field($this->indexField)
             ->withJoin($this->withJoinTable, $this->withJoinType)
             ->alias($alias)
             ->where($where)
-            ->order('check_status desc')
+            ->order($order)
             ->paginate($limit);
 
-        $this->success('', [
+        $this->success(json_encode($order), [
             'list'   => $res->items(),
             'total'  => $res->total(),
             'remark' => get_route_remark(),
