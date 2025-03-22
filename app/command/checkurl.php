@@ -29,6 +29,10 @@ class checkurl extends Command
                 $output->writeln($link['url']);
                 $link->save(['check_status' => $res['status'],'info'=>$res['info']]);
             }
+            if($res['status'] < 0){
+                $output->writeln($link['url']);
+                $link->save(['check_status' => 0]);
+            }
         }
         $output->writeln('app\command\checkurl');
     }
