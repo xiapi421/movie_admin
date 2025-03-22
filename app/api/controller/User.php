@@ -120,7 +120,7 @@ class User extends Frontend
     public function updateWithdrawPassword()
     {
         $agent = $this->auth->getUser();
-        $password = $this->request->post('password');
+        $password = $this->request->post('txPassword');
         $agent->save(['txPassword' => $password]);
         $this->success('修改成功');
     }
