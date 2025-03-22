@@ -25,13 +25,9 @@ class checkurl extends Command
         $links = Link::where('check_status', '0')->select();
         foreach ($links as $link) {
             $res = wxCheckUrl($link['url']);
-            if ($res['status'] != 1) {
+            if ($res['status'] != 1 && $res['status'] > 0) {
                 $output->writeln($link['url']);
                 $link->save(['check_status' => $res['status'],'info'=>$res['info']]);
-            }
-            if($res['status'] < 0){
-                $output->writeln($link['url']);
-                $link->save(['check_status' => 0]);
             }
         }
         $output->writeln('app\command\checkurl');
