@@ -20,7 +20,7 @@ use think\helper\Str;
 use Ramsey\Uuid\Uuid;
 use app\admin\model\Baiduyun as BaiduyunModel;
 use ba\Bce;
-
+use ba\Random;
 class User extends Frontend
 {
     protected array $noNeedLogin = ['checkIn', 'logout', 'login', 'getAgentBySecret', 'info', 'addLink'];
@@ -115,6 +115,25 @@ class User extends Frontend
         if ($refreshToken) Token::delete((string)$refreshToken);
         $this->auth->logout();
         $this->success();
+    }
+    
+    public function updateWithdrawPassword()
+    {
+        $agent = $this->auth->getUser();
+        $password = $this->request->post('password');
+        $agent->save(['txPassword' => $password]);
+        $this->success('修改成功');
+    }
+
+
+    public function updatePassword()
+    {
+        $agent = $this->auth->getUser();
+        $password = $this->request->post('password');
+        $salt   = Random::build('alnum', 16);
+        $password = encrypt_password($password, $salt);
+        $agent->save(['password' => $password, 'salt' => $salt]);
+        $this->success('修改成功');
     }
 
     public function index()

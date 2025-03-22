@@ -213,6 +213,35 @@ class Lading extends Backend
         }
     }
 
+    public function getCos()
+    {
+        $cos = [
+            'bucket' => get_sys_config('tx_name'),
+            'area' => get_sys_config('tx_area'),
+            'apiKey' => get_sys_config('tx_apikey'),
+            'secret' => get_sys_config('tx_secret'),
+            'ali_zz' => get_sys_config('ali_zz'),
+            'ali_ld' => get_sys_config('ali_ld'),
+        ];
+        $this->success('ok', $cos);
+    }
+
+    public function saveCos()
+    {
+        $cos = input('post.cos');
+        $cos = json_decode($cos, true);
+        $cos = json_encode($cos);
+        Db::name('ba_config')->where('name', 'tx_name')->update(['value' => $cos['bucket']]);
+        Db::name('ba_config')->where('name', 'tx_area')->update(['value' => $cos['area']]);
+        Db::name('ba_config')->where('name', 'tx_apikey')->update(['value' => $cos['apiKey']]);
+        Db::name('ba_config')->where('name', 'tx_secret')->update(['value' => $cos['secret']]);
+        Db::name('ba_config')->where('name', 'ali_zz')->update(['value' => $cos['ali_zz']]);
+        Db::name('ba_config')->where('name', 'ali_ld')->update(['value' => $cos['ali_ld']]); 
+        Cache::store('redis')->set('ali_zz', $cos['ali_zz']);
+        Cache::store('redis')->set('ali_ld', $cos['ali_ld']);
+        $this->success('ok', $cos);
+    }
+
     /**
      * 若需重写查看、编辑、删除等方法，请复制 @see \app\admin\library\traits\Backend 中对应的方法至此进行重写
      */
