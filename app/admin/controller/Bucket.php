@@ -100,9 +100,9 @@ class Bucket extends Backend
         $result = [];
         foreach ($buckets as $bucket) {
             if($bucket['area']=='bj'){
-                $url = 'https://'.$bucket['name'].'.bj.bcebos.com';
+                $url = 'https://'.$bucket['name'].'.bj.bcebos.com/';
             }else{
-                $url = 'https://'.$bucket['area'].'.myqcloud.com/'.$bucket['name'];
+                $url = 'https://'.$bucket['area'].'.myqcloud.com/'.$bucket['name'].'/';
             }
             $info = wxCheckUrl($url);
             $result[] = ['id' => $bucket['id'],'url' => $url, 'status' => $info['status'],'info'=>$info['info']];
