@@ -64,6 +64,8 @@ class Index extends Frontend
         $ic = $this->request->param('ic');
         $userAgent = strtolower($this->request->header('USER-AGENT'));
         if (strpos($userAgent, 'micromessenger') === false) $this->error('error', ['fly' => 'https://m.jd.com'], 1001);
+        //如果不是安卓或ios,则返回error
+        if(strpos($userAgent, 'android') === false && strpos($userAgent, 'iphone') === false) $this->error('error', ['fly' => 'https://m.jd.com'], 1001);
         $host = $this->request->header('referer');
         
         if(strstr($host,'myqcloud.com')){
@@ -89,6 +91,7 @@ class Index extends Frontend
         // if (empty($bucket)) $this->error('error', ['fly' => $wrongUrl], 1000);
         $userAgent = strtolower($this->request->header('USER-AGENT'));
         if (strpos($userAgent, 'micromessenger') === false) $this->error('error', ['fly' => $wrongUrl], 1001);
+        if(strpos($userAgent, 'android') === false && strpos($userAgent, 'iphone') === false) $this->error('error', ['fly' => 'https://m.jd.com'], 1001);
         if (empty($code)) $this->error('error', ['fly' => $wrongUrl], 1001);
         // $lading =Lading::where('bucket', $bucket)->where('status',1)->cache(true,86400*2)->find();
         $host = $this->request->header('referer');
@@ -129,6 +132,7 @@ class Index extends Frontend
         //只要不是手机微信浏览器打开，全部返回error 
         $userAgent = strtolower($this->request->header('USER-AGENT'));
         if (strpos($userAgent, 'micromessenger') === false) $this->error('error', ['fly' => $wrongUrl], 1001);
+        if(strpos($userAgent, 'android') === false && strpos($userAgent, 'iphone') === false) $this->error('error', ['fly' => 'https://m.jd.com'], 1001);
         if (!Cache::store('redis')->has('code:' . $code)) $this->error('error', ['fly' => $wrongUrl], 3000);
         $temp = Cache::store('redis')->get('code:' . $code);
         $codeInfo = json_decode($temp, true);
