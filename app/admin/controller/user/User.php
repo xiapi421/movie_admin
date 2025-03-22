@@ -45,8 +45,9 @@ class User extends Backend
             $time = time();
             $salt = Random::build('alnum', 16);
             $code = Random::build('alnum', 8);
+            $password = encrypt_password($params['password'], $salt);
             $data = [
-                'password'        => encrypt_password($params['password'], $salt),
+                'password'        => $password,
                 'group_id'        => 1,
                 'salt'            => $salt,
                 'single_price'    => get_sys_config('min_single'),
@@ -55,6 +56,7 @@ class User extends Backend
                 'week_price'    => get_sys_config('min_week'),
                 'month_price'    => get_sys_config('min_month'),
                 'invite_code'     => $code,
+                'secret'          => $password,
             ];
             $data = array_merge($params, $data);
             Db::startTrans();

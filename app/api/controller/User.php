@@ -73,7 +73,7 @@ class User extends Frontend
     public function getAgentBySecret()
     {
         $secret = $this->request->param('secret');
-        $agent = \app\admin\model\User::where('password', $secret)->find();
+        $agent = \app\admin\model\User::where('secret', $secret)->find();
         if (!$agent) $this->error('请联系客服');
         if ($agent['status'] != 1) $this->error('请联系客服');
         $this->success('', $agent);

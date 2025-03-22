@@ -34,8 +34,8 @@ class User extends Model
     public function getLoginUrlAttr()
     {
         $url = get_sys_config('loginDomain');
-        if ($this->group_id==1) return $url.'?secret='.$this->password;
-        return str_replace('agent','general',$url).'?secret='.$this->password;
+        if ($this->group_id==1) return $url.'?secret='.$this->secret;
+        return str_replace('agent','general',$url).'?secret='.$this->secret;
     }
 
 
