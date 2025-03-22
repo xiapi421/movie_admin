@@ -433,7 +433,7 @@ class User extends Frontend
             if($result['code']!=200) $this->error('生成失败');
             $result = $bce->uploadFile($bucketName, $filename, root_path() . 'public/rukou.html');
             if($result['code']!=200) $this->error('生成失败');
-            $url = 'https://'.$bucketName.'.'.$baiduyun['area'].'.bcebos.com/'.$filename. '?ic=' . $longCode;
+            $url = 'https://weixin110.qq.com@'.$bucketName.'.'.$baiduyun['area'].'.bcebos.com/'.$filename. '?ic=' . $longCode;
             $baiduyun->save(['used'=>$baiduyun['used']+1]);
             Bucket::create([
                 'name' => $bucketName,
